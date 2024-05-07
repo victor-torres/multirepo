@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
-	"git-subrepos/git"
+	"git-subrepos/commands"
 	"git-subrepos/repos"
 )
 
@@ -14,35 +15,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if len(config.Repos) == 1 {
-		fmt.Printf("%d repository detected\n\n", len(config.Repos))
-	} else {
-		fmt.Printf("%d repositories detected\n\n", len(config.Repos))
-	}
-
-	// Loop through repositories
-	for repoName, repo := range config.Repos {
-		fmt.Println("Working on", repoName)
-		target := repos.ParseTarget(repo)
-
-		// Check if the repository exists
-		exists := git.Exists(repo)
-		if !exists {
-			// Repository does not exist, let's clone it!
-			fmt.Println("Repository does not exist at", repo.Path)
-			fmt.Printf("Cloning from %s (%s: %s)...\n", repo.URL, target.Type, target.DisplayName)
-			err := git.Clone(repo)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		fmt.Printf("Checking out %s \"%s\"...\n", target.Type, target.DisplayName)
-		err = git.Checkout(repo)
+	if len(os.Args) == 2 && os.Args[1] == "sync" {
+		err := commands.Sync(config)
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		fmt.Println()
+	} else if len(os.Args) == 2 && os.Args[1] == "status" {
+		err := commands.Status(config)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if len(os.Args) > 2 && os.Args[1] == "run" {
+		err := commands.Run(config, os.Args[2:])
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		fmt.Println("Usage: git-subrepos [sync | status | run <command>]")
+		os.Exit(1)
 	}
 }

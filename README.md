@@ -42,10 +42,26 @@ we need to clone the repositories,
 and checkout the reference
 specified in the `subrepos.yaml` file.
 
+```shell
+git-subrepos sync
+```
+
 You can sync repositories how many times you want:
 
 - If the repository does not exist, it will be cloned.
 - If the repository is dirty, we'll abort the operation.
+
+You can also query the status of all git repositories:
+
+```shell
+git-subrepos status
+```
+
+And there's a convenient method to run a command on all of them at once with:
+
+```shell
+git-subrepos run git stash
+```
 
 ## Motivation
 
