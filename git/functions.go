@@ -2,9 +2,10 @@ package git
 
 import (
 	"fmt"
-	"git-subrepos/repos"
 	"os/exec"
 	"strings"
+
+	"git-subrepos/repos"
 )
 
 func Exists(repo repos.Repo) bool {

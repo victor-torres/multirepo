@@ -2,9 +2,12 @@ package commands
 
 import (
 	"fmt"
+	"strings"
+
 	"git-subrepos/git"
 	"git-subrepos/repos"
-	"strings"
+
+	"github.com/fatih/color"
 )
 
 func Sync(config repos.Config) error {
@@ -59,14 +62,10 @@ func Status(config repos.Config) error {
 			continue
 		}
 
-		var dirtyString string
-		if isDirty {
-			dirtyString = "✗"
-		} else {
-			dirtyString = "✔"
-		}
+		target := repos.ParseTarget(repo)
+		dirtyStatus := ParseDirtyStatus(status, isDirty, target)
 
-		fmt.Printf("%s%s%s %s\n", repoName, tabString, dirtyString, status)
+		fmt.Printf("%s%s%s %s %s\n", repoName, tabString, dirtyStatus.Icon, status, color.RedString(dirtyStatus.Reason))
 	}
 	return nil
 }
