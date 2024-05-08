@@ -1,6 +1,7 @@
 package repos
 
 import (
+	"errors"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -24,7 +25,7 @@ func ParseConfig() (Config, error) {
 	return config, nil
 }
 
-func ParseTarget(repo Repo) Target {
+func ParseTarget(repo Repo) (Target, error) {
 	var target Target
 
 	if repo.Commit != "" {
@@ -40,9 +41,8 @@ func ParseTarget(repo Repo) Target {
 		target.Name = repo.Branch
 		target.DisplayName = repo.Branch
 	} else {
-		target.Type = "branch"
-		target.DisplayName = "default"
+		return target, errors.New("Missing reference (commit, tag, or branch)")
 	}
 
-	return target
+	return target, nil
 }

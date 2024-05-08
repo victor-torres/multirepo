@@ -20,30 +20,29 @@ func PrintRepositoryCounter(config repos.Config) {
 
 func ParseDirtyStatus(status string, isDirty bool, target repos.Target) DirtyStatus {
 	var dirtyStatus DirtyStatus
-	dirtyStatus.IsDirty = isDirty
+	if isDirty {
+		dirtyStatus.IsDirty = true
+		dirtyStatus.Reasons = append(dirtyStatus.Reasons, "uncommitted changes")
+	}
 
 	if target.Type == "commit" {
 		statusQuery := fmt.Sprintf("commit %s", target.Name)
 		if !strings.Contains(status, statusQuery) {
 			dirtyStatus.IsDirty = true
-			dirtyStatus.Reason = "unmatching commit"
+			dirtyStatus.Reasons = append(dirtyStatus.Reasons, "unmatching commit")
 		}
 	} else if target.Type == "tag" {
 		statusQuery := fmt.Sprintf("tag: %s", target.Name)
 		if !strings.Contains(status, statusQuery) {
 			dirtyStatus.IsDirty = true
-			dirtyStatus.Reason = "unmatching tag"
+			dirtyStatus.Reasons = append(dirtyStatus.Reasons, "unmatching tag")
 		}
 	} else if target.Type == "branch" {
 		statusQuery := fmt.Sprintf("/%s)", target.Name)
 		if !strings.Contains(status, statusQuery) {
 			dirtyStatus.IsDirty = true
-			dirtyStatus.Reason = "unmatching branch"
+			dirtyStatus.Reasons = append(dirtyStatus.Reasons, "unmatching branch")
 		}
-	}
-
-	if dirtyStatus.IsDirty && dirtyStatus.Reason == "" {
-		dirtyStatus.Reason = "uncommited changes"
 	}
 
 	if dirtyStatus.IsDirty {

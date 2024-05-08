@@ -2,6 +2,6 @@ package commands
 
 type DirtyStatus struct {
 	IsDirty bool
-	Reason  string
+	Reasons []string
 	Icon    string
 }

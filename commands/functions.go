@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"log"
+	"os/exec"
 	"strings"
 
 	"git-subrepos/git"
@@ -15,22 +17,23 @@ func Sync(config repos.Config) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		fmt.Println("Working on", repoName)
-		target := repos.ParseTarget(repo)
+		target, err := repos.ParseTarget(repo)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		exists := git.Exists(repo)
 		if !exists {
 			// Repository does not exist, let's clone it!
-			fmt.Println("Repository does not exist at", repo.Path)
-			fmt.Printf("Cloning from %s (%s: %s)...\n", repo.URL, target.Type, target.DisplayName)
+			fmt.Printf("➜ %s$ git clone %s\n", repo.Path, repo.URL)
 			err := git.Clone(repo)
 			if err != nil {
 				return err
 			}
 		}
 
-		fmt.Printf("Checking out %s \"%s\"...\n", target.Type, target.DisplayName)
-		err := git.Checkout(repo)
+		fmt.Printf("➜ %s$ git checkout %s\n", repo.Path, target.Name)
+		err = git.Checkout(repo)
 		if err != nil {
 			return err
 		}
@@ -67,22 +70,42 @@ func Status(config repos.Config) error {
 			continue
 		}
 
-		target := repos.ParseTarget(repo)
-		isDirty := git.HasDiff(repo)
-		dirtyStatus := ParseDirtyStatus(status, isDirty, target)
+		target, err := repos.ParseTarget(repo)
+		if err != nil {
+			return err
+		}
 
-		fmt.Printf("%s%s%s %s %s\n", repoName, tabString, dirtyStatus.Icon, status, color.RedString(dirtyStatus.Reason))
+		isDirty, err := git.IsDirty(repo)
+		if err != nil {
+			return err
+		}
+		dirtyStatus := ParseDirtyStatus(status, isDirty, target)
+		reasons := strings.Join(dirtyStatus.Reasons, ", ")
+		fmt.Printf("%s%s%s %s %s\n", repoName, tabString, dirtyStatus.Icon, status, color.RedString(reasons))
 	}
 	return nil
 }
 
-func Run(config repos.Config, args []string) error {
+func Run(config repos.Config, command string, args []string) error {
 	PrintRepositoryCounter(config)
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		fmt.Printf("Running on %s at %s\n", repoName, repo.Path)
-		fmt.Println()
+		fmt.Printf("➜ %s$ %s %s\n", repo.Path, command, strings.Join(args, " "))
+
+		cmd := exec.Command(command)
+		cmd.Dir = repo.Path
+
+		for i := 0; i < len(args); i++ {
+			cmd.Args = append(cmd.Args, args[i])
+		}
+
+		out, err := cmd.CombinedOutput()
+		outString := string(out)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(outString)
 	}
 	return nil
 }

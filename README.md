@@ -24,6 +24,7 @@ repos:
   dani-repo:
     path: dani-repo
     url: git@github.com:company/dani-repo.git
+    branch: main
 ```
 
 If cloning inside the main repository,
@@ -43,8 +44,46 @@ and checkout the reference
 specified in the `subrepos.yaml` file.
 
 ```shell
-git-subrepos sync
+$ git-subrepos sync
+4 repositories detected
+
+➜ alice-repo$ git clone git@bitbucket.org:company/alice-repo.git
+➜ alice-repo$ git clone git@bitbucket.org:company/alice-repo.git
+Cloning into 'alice-repo'...
+➜ alice-repo$ git checkout main
+branch 'alice-branch' set up to track 'origin/alice-branch'.
+Switched to a new branch 'alice-branch'
+
+➜ bob-repo$ git clone git@bitbucket.org:company/bob-repo.git
+➜ bob-repo$ git clone git@bitbucket.org:company/bob-repo.git
+Cloning into 'bob-repo'...
+➜ bob-repo$ git checkout main
+Note: switching to 'bob-tag'.
+HEAD is now at 84227b7 Update .gitignore
+
+➜ chad-repo$ git clone git@github.com:company/chad-repo.git
+➜ chad-repo$ git clone git@github.com:company/chad-repo.git
+Cloning into 'chad-repo'...
+➜ chad-repo$ git checkout main
+Note: switching to '770a815107480f2f39b2359f381b3e20cc3c0af0'.
+HEAD is now at 770a815 Update Dockerfile
+
+➜ dani-repo$ git clone git@github.com:company/dani-repo.git
+➜ dani-repo$ git clone git@github.com:company/dani-repo.git
+Cloning into 'dani-repo'...
+➜ dani-repo$ git checkout main
+Already on 'main'
+Your branch is up to date with 'origin/main'.
+
+4 repositories detected
+
+alice-repo                    ✔ commit 8c32bbbf474beb4fd95f6a57c6726adad5c946c7 (HEAD, -> alice-branch, origin/alice-branch)
+bob-repo                      ✔ commit 84227b7a73b212dfc8fe129475a82098a393842c (HEAD, tag: bob-tag)
+chad-repo                     ✔ commit 770a815107480f2f39b2359f381b3e20cc3c0af0
+dani-repo                     ✔ commit 93b5706409a74b1da30623f1036a2da87e856c79 (HEAD -> main, origin/main)
 ```
+
+For your convenience, we run a status command everytime you sync a project.
 
 You can sync repositories how many times you want:
 
@@ -54,13 +93,30 @@ You can sync repositories how many times you want:
 You can also query the status of all git repositories:
 
 ```shell
-git-subrepos status
+$git-subrepos status
+4 repositories detected
+
+alice-repo                    ✗ commit 8c32bbbf474beb4fd95f6a57c6726adad5c946c7 (HEAD, -> alice-branch, origin/alice-branch) uncommited changes
+bob-repo                      ✔ commit 84227b7a73b212dfc8fe129475a82098a393842c (HEAD, tag: bob-tag)
+chad-repo                     ✗ commit cbc18a7a2ae9df9ea11b94cb391c33fa6e464e53
+dani-repo                     ✔ commit 93b5706409a74b1da30623f1036a2da87e856c79 (HEAD -> main, origin/main)
 ```
 
 And there's a convenient method to run a command on all of them at once with:
 
 ```shell
-git-subrepos run git stash
+$git-subrepos run git stash
+➜ alice-repo$ git stash
+Saved working directory and index state WIP on main: 8c32bbb Huge refactor
+
+➜ bob-repo$ git stash
+No local changes to save
+
+➜ chad-repo$ git stash
+No local changes to save
+
+➜ dani-repo$ git stash
+No local changes to save
 ```
 
 ## Motivation

@@ -36,24 +36,16 @@ func Status(repo repos.Repo) (string, error) {
 	return outString, err
 }
 
-func Diff(repo repos.Repo, args ...string) (string, error) {
+func IsDirty(repo repos.Repo) (bool, error) {
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
 	cmd.Args = append(cmd.Args, repo.Path)
-	cmd.Args = append(cmd.Args, "diff")
-
-	for i := 0; i < len(args); i++ {
-		cmd.Args = append(cmd.Args, args[i])
-	}
+	cmd.Args = append(cmd.Args, "status")
+	cmd.Args = append(cmd.Args, "--long")
 
 	out, err := cmd.CombinedOutput()
 	outString := string(out)
-	return outString, err
-}
-
-func HasDiff(repo repos.Repo) bool {
-	_, err := Diff(repo, "--quiet")
-	return err != nil
+	return !strings.Contains(outString, "working tree clean"), err
 }
 
 func Clone(repo repos.Repo) error {
