@@ -7,8 +7,8 @@ permissions:
     packages: write
 
 jobs:
-  release-linux-amd64:
-    name: release linux/amd64
+  build-and-add-binaries-to-release:
+    name: build code and add binaries to release
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
