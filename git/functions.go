@@ -9,19 +9,29 @@ import (
 )
 
 func Exists(repo repos.Repo) bool {
+    repoPath, err := repos.ResolveHomeDir(repo.Path)
+    if err != nil {
+        return false
+    }
+
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
-	cmd.Args = append(cmd.Args, repo.Path)
+	cmd.Args = append(cmd.Args, repoPath)
 	cmd.Args = append(cmd.Args, "status")
 
-	_, err := cmd.CombinedOutput()
+	_, err = cmd.CombinedOutput()
 	return err == nil
 }
 
 func Status(repo repos.Repo) (string, error) {
+    repoPath, err := repos.ResolveHomeDir(repo.Path)
+    if err != nil {
+        return "", err
+    }
+
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
-	cmd.Args = append(cmd.Args, repo.Path)
+	cmd.Args = append(cmd.Args, repoPath)
 	cmd.Args = append(cmd.Args, "log")
 	cmd.Args = append(cmd.Args, "-n")
 	cmd.Args = append(cmd.Args, "1")
@@ -37,9 +47,14 @@ func Status(repo repos.Repo) (string, error) {
 }
 
 func IsDirty(repo repos.Repo) (bool, error) {
+    repoPath, err := repos.ResolveHomeDir(repo.Path)
+    if err != nil {
+        return false, err
+    }
+
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
-	cmd.Args = append(cmd.Args, repo.Path)
+	cmd.Args = append(cmd.Args, repoPath)
 	cmd.Args = append(cmd.Args, "status")
 	cmd.Args = append(cmd.Args, "--long")
 
@@ -49,10 +64,15 @@ func IsDirty(repo repos.Repo) (bool, error) {
 }
 
 func Clone(repo repos.Repo) error {
+    repoPath, err := repos.ResolveHomeDir(repo.Path)
+    if err != nil {
+        return err
+    }
+
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "clone")
 	cmd.Args = append(cmd.Args, repo.URL)
-	cmd.Args = append(cmd.Args, repo.Path)
+	cmd.Args = append(cmd.Args, repoPath)
 
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", out)
@@ -60,9 +80,14 @@ func Clone(repo repos.Repo) error {
 }
 
 func Checkout(repo repos.Repo) error {
+    repoPath, err := repos.ResolveHomeDir(repo.Path)
+    if err != nil {
+        return err
+    }
+
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
-	cmd.Args = append(cmd.Args, repo.Path)
+	cmd.Args = append(cmd.Args, repoPath)
 	cmd.Args = append(cmd.Args, "checkout")
 
 	if repo.Commit != "" {

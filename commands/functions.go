@@ -17,6 +17,11 @@ func Sync(config repos.Config) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
+		repoPath, err := repos.ResolveHomeDir(repo.Path)
+		if err != nil {
+		    log.Fatal(err)
+		}
+
 		target, err := repos.ParseTarget(repo)
 		if err != nil {
 			log.Fatal(err)
@@ -25,14 +30,14 @@ func Sync(config repos.Config) error {
 		exists := git.Exists(repo)
 		if !exists {
 			// Repository does not exist, let's clone it!
-			fmt.Printf("➜ %s$ git clone %s\n", repo.Path, repo.URL)
+			fmt.Printf("➜ %s$ git clone %s\n", repoPath, repo.URL)
 			err := git.Clone(repo)
 			if err != nil {
 				return err
 			}
 		}
 
-		fmt.Printf("➜ %s$ git checkout %s\n", repo.Path, target.Name)
+		fmt.Printf("➜ %s$ git checkout %s\n", repoPath, target.Name)
 		err = git.Checkout(repo)
 		if err != nil {
 			return err
@@ -91,10 +96,14 @@ func Run(config repos.Config, command string, args []string) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		fmt.Printf("➜ %s$ %s %s\n", repo.Path, command, strings.Join(args, " "))
+		repoPath, err := repos.ResolveHomeDir(repo.Path)
+		if err != nil {
+		    log.Fatal(err)
+		}
+		fmt.Printf("➜ %s$ %s %s\n", repoPath, command, strings.Join(args, " "))
 
 		cmd := exec.Command(command)
-		cmd.Dir = repo.Path
+		cmd.Dir = repoPath
 
 		for i := 0; i < len(args); i++ {
 			cmd.Args = append(cmd.Args, args[i])
