@@ -54,19 +54,21 @@ func Status(config repos.Config) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
+
 		tabBuilder := &strings.Builder{}
 		for i := 0; i < (maxRepoNameLength + 4 - len(repoName)); i++ {
 			tabBuilder.WriteString(" ")
 		}
 		tabString := tabBuilder.String()
 
-		status, isDirty, err := git.Status(repo)
+		status, err := git.Status(repo)
 		if err != nil {
 			fmt.Printf("%s%s%s\n", repoName, tabString, color.RedString("✗ repository not found"))
 			continue
 		}
 
 		target := repos.ParseTarget(repo)
+		isDirty := git.HasDiff(repo)
 		dirtyStatus := ParseDirtyStatus(status, isDirty, target)
 
 		fmt.Printf("%s%s%s %s %s\n", repoName, tabString, dirtyStatus.Icon, status, color.RedString(dirtyStatus.Reason))

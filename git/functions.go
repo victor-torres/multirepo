@@ -18,7 +18,7 @@ func Exists(repo repos.Repo) bool {
 	return err == nil
 }
 
-func Status(repo repos.Repo) (string, bool, error) {
+func Status(repo repos.Repo) (string, error) {
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
 	cmd.Args = append(cmd.Args, repo.Path)
@@ -33,20 +33,27 @@ func Status(repo repos.Repo) (string, bool, error) {
 	outString := string(out)
 	outString = strings.Split(outString, "\n")[0]
 
-	if err != nil {
-		return outString, true, err
-	}
+	return outString, err
+}
 
-	cmd = exec.Command("git")
+func Diff(repo repos.Repo, args ...string) (string, error) {
+	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
 	cmd.Args = append(cmd.Args, repo.Path)
 	cmd.Args = append(cmd.Args, "diff")
-	cmd.Args = append(cmd.Args, "-q")
 
-	out, err = cmd.CombinedOutput()
-	isDirty := len(out) > 1
+	for i := 0; i < len(args); i++ {
+		cmd.Args = append(cmd.Args, args[i])
+	}
 
-	return outString, isDirty, err
+	out, err := cmd.CombinedOutput()
+	outString := string(out)
+	return outString, err
+}
+
+func HasDiff(repo repos.Repo) bool {
+	_, err := Diff(repo, "--quiet")
+	return err != nil
 }
 
 func Clone(repo repos.Repo) error {
