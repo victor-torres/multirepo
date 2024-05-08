@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"git-subrepos/repos"
+
+	"github.com/fatih/color"
 )
 
 func PrintRepositoryCounter(config repos.Config) {
@@ -45,9 +47,9 @@ func ParseDirtyStatus(status string, isDirty bool, target repos.Target) DirtySta
 	}
 
 	if dirtyStatus.IsDirty {
-		dirtyStatus.Icon = "✗"
+		dirtyStatus.Icon = color.RedString("✗")
 	} else {
-		dirtyStatus.Icon = "✔"
+		dirtyStatus.Icon = color.GreenString("✔")
 	}
 
 	return dirtyStatus

@@ -62,7 +62,7 @@ func Status(config repos.Config) error {
 
 		status, isDirty, err := git.Status(repo)
 		if err != nil {
-			fmt.Printf("%s%s✗ %s\n", repoName, tabString, color.RedString("repository not found"))
+			fmt.Printf("%s%s%s\n", repoName, tabString, color.RedString("✗ repository not found"))
 			continue
 		}
 
