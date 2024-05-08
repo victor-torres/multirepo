@@ -63,6 +63,43 @@ func IsDirty(repo repos.Repo) (bool, error) {
 	return !strings.Contains(outString, "working tree clean"), err
 }
 
+func GetCurrentBranch(repo repos.Repo) (string, error) {
+    repoPath, err := repos.ResolveHomeDir(repo.Path)
+    if err != nil {
+        return "", err
+    }
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "branch")
+	cmd.Args = append(cmd.Args, "--show-current")
+
+	out, err := cmd.CombinedOutput()
+	outString := string(out)
+	outString = strings.TrimSpace(outString)
+	return outString, err
+}
+
+func GetCurrentTags(repo repos.Repo) (string, error) {
+    repoPath, err := repos.ResolveHomeDir(repo.Path)
+    if err != nil {
+        return "", err
+    }
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "tag")
+	cmd.Args = append(cmd.Args, "--points-at")
+	cmd.Args = append(cmd.Args, "HEAD")
+
+	out, err := cmd.CombinedOutput()
+	outString := string(out)
+	outString = strings.TrimSpace(outString)
+	return outString, err
+}
+
 func Clone(repo repos.Repo) error {
     repoPath, err := repos.ResolveHomeDir(repo.Path)
     if err != nil {

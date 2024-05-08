@@ -80,11 +80,10 @@ func Status(config repos.Config) error {
 			return err
 		}
 
+        currentBranch, err := git.GetCurrentBranch(repo)
+        currentTags, err := git.GetCurrentTags(repo)
 		isDirty, err := git.IsDirty(repo)
-		if err != nil {
-			return err
-		}
-		dirtyStatus := ParseDirtyStatus(status, isDirty, target)
+		dirtyStatus := ParseDirtyStatus(status, isDirty, currentBranch, currentTags, target)
 		reasons := strings.Join(dirtyStatus.Reasons, ", ")
 		fmt.Printf("%s%s%s %s %s\n", repoName, tabString, dirtyStatus.Icon, status, color.RedString(reasons))
 	}
