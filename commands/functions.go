@@ -12,7 +12,9 @@ import (
 
 func Sync(config repos.Config) error {
 	PrintRepositoryCounter(config)
-	for repoName, repo := range config.Repos {
+	orderedRepoNames := GetOrderedRepoNames(config)
+	for _, repoName := range orderedRepoNames {
+		repo := config.Repos[repoName]
 		fmt.Println("Working on", repoName)
 		target := repos.ParseTarget(repo)
 
@@ -43,13 +45,15 @@ func Status(config repos.Config) error {
 	PrintRepositoryCounter(config)
 
 	maxRepoNameLength := 0
-	for repoName, _ := range config.Repos {
+	for repoName := range config.Repos {
 		if len(repoName) > maxRepoNameLength {
 			maxRepoNameLength = len(repoName)
 		}
 	}
 
-	for repoName, repo := range config.Repos {
+	orderedRepoNames := GetOrderedRepoNames(config)
+	for _, repoName := range orderedRepoNames {
+		repo := config.Repos[repoName]
 		tabBuilder := &strings.Builder{}
 		for i := 0; i < (maxRepoNameLength + 4 - len(repoName)); i++ {
 			tabBuilder.WriteString(" ")
@@ -72,7 +76,9 @@ func Status(config repos.Config) error {
 
 func Run(config repos.Config, args []string) error {
 	PrintRepositoryCounter(config)
-	for repoName, repo := range config.Repos {
+	orderedRepoNames := GetOrderedRepoNames(config)
+	for _, repoName := range orderedRepoNames {
+		repo := config.Repos[repoName]
 		fmt.Printf("Running on %s at %s\n", repoName, repo.Path)
 		fmt.Println()
 	}

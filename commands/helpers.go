@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"git-subrepos/repos"
@@ -50,4 +51,13 @@ func ParseDirtyStatus(status string, isDirty bool, target repos.Target) DirtySta
 	}
 
 	return dirtyStatus
+}
+
+func GetOrderedRepoNames(config repos.Config) []string {
+	var repoNames []string
+	for repoName := range config.Repos {
+		repoNames = append(repoNames, repoName)
+	}
+	sort.Strings(repoNames)
+	return repoNames
 }
