@@ -28,14 +28,7 @@ func Sync(config repositories.Config) error {
 		}
 
 		exists := git.Exists(repo)
-		if exists {
-			// Repository exists, let's fetch it!
-			fmt.Printf("➜ %s$ git fetch\n", repoPath)
-			err := git.Fetch(repo)
-			if err != nil {
-				return err
-			}
-		} else {
+		if !exists {
 			// Repository does not exist, let's clone it!
 			fmt.Printf("➜ %s$ git clone %s\n", repoPath, repo.URL)
 			err := git.Clone(repo)
@@ -76,7 +69,7 @@ func Status(config repositories.Config) error {
 		}
 		tabString := tabBuilder.String()
 
-		status, err := git.GetStatus(repo)
+		commitHash, err := git.GetCurrentCommit(repo)
 		if err != nil {
 			fmt.Printf("%s%s%s\n", repoName, tabString, color.RedString("✗ repository not found"))
 			continue
@@ -87,12 +80,51 @@ func Status(config repositories.Config) error {
 			return err
 		}
 
-		currentBranch, err := git.GetCurrentBranch(repo)
-		currentTags, err := git.GetCurrentTags(repo)
+		icon := color.GreenString("✔")
+
+		var dirtyString string
 		isDirty, err := git.IsDirty(repo)
-		dirtyStatus := ParseDirtyStatus(status, isDirty, currentBranch, currentTags, target)
-		reasons := strings.Join(dirtyStatus.Reasons, ", ")
-		fmt.Printf("%s%s%s %s %s\n", repoName, tabString, dirtyStatus.Icon, status, color.RedString(reasons))
+		if isDirty {
+			dirtyString = color.RedString("(uncommitted changes)")
+			icon = color.RedString("✗")
+		}
+
+		// FIXME: this might return multiple tags and not just one
+		currentTags, err := git.GetCurrentTags(repo)
+		currentBranch, err := git.GetCurrentBranch(repo)
+
+		var currentReference string
+		if currentTags != "" {
+			currentReference = fmt.Sprintf("tag: %s", currentTags)
+		} else if currentBranch != "" {
+			currentReference = fmt.Sprintf("branch: %s", currentBranch)
+		} else {
+			currentReference = commitHash
+		}
+
+		var targetString string
+		if target.Type == "commit" {
+			if target.Name != commitHash {
+				targetString = color.RedString(fmt.Sprintf("(%s ➜ %s)", target.Name, commitHash))
+				icon = color.RedString("✗")
+			}
+		} else if target.Type == "tag" {
+			if target.Name == currentTags {
+				targetString = color.GreenString(fmt.Sprintf("(tag: %s)", currentTags))
+			} else {
+				targetString = color.RedString(fmt.Sprintf("(tag: %s ➜ %s)", target.Name, currentReference))
+				icon = color.RedString("✗")
+			}
+		} else if target.Type == "branch" {
+			if target.Name == currentBranch {
+				targetString = color.GreenString(fmt.Sprintf("(branch: %s)", currentBranch))
+			} else {
+				targetString = color.RedString(fmt.Sprintf("(branch: %s ➜ %s)", target.Name, currentReference))
+				icon = color.RedString("✗")
+			}
+		}
+
+		fmt.Printf("%s%s%s %s %s %s\n", repoName, tabString, icon, commitHash, targetString, dirtyString)
 	}
 	return nil
 }

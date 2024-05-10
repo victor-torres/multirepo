@@ -23,45 +23,6 @@ func Exists(repo repositories.Repository) bool {
 	return err == nil
 }
 
-func Fetch(repo repositories.Repository) error {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.Command("git")
-	cmd.Args = append(cmd.Args, "-C")
-	cmd.Args = append(cmd.Args, repoPath)
-	cmd.Args = append(cmd.Args, "fetch")
-
-	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
-	return err
-}
-
-func GetStatus(repo repositories.Repository) (string, error) {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
-	if err != nil {
-		return "", err
-	}
-
-	cmd := exec.Command("git")
-	cmd.Args = append(cmd.Args, "-C")
-	cmd.Args = append(cmd.Args, repoPath)
-	cmd.Args = append(cmd.Args, "log")
-	cmd.Args = append(cmd.Args, "-n")
-	cmd.Args = append(cmd.Args, "1")
-	cmd.Args = append(cmd.Args, "-b")
-	cmd.Args = append(cmd.Args, ".")
-	cmd.Args = append(cmd.Args, "--decorate")
-
-	out, err := cmd.CombinedOutput()
-	outString := string(out)
-	outString = strings.Split(outString, "\n")[0]
-
-	return outString, err
-}
-
 func IsDirty(repo repositories.Repository) (bool, error) {
 	repoPath, err := repositories.ResolveHomeDir(repo.Path)
 	if err != nil {
@@ -77,6 +38,26 @@ func IsDirty(repo repositories.Repository) (bool, error) {
 	out, err := cmd.CombinedOutput()
 	outString := string(out)
 	return !strings.Contains(outString, "working tree clean"), err
+}
+
+func GetCurrentCommit(repo repositories.Repository) (string, error) {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return "", err
+	}
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "log")
+	cmd.Args = append(cmd.Args, "-n")
+	cmd.Args = append(cmd.Args, "1")
+	cmd.Args = append(cmd.Args, "--pretty=%H")
+
+	out, err := cmd.CombinedOutput()
+	outString := string(out)
+	outString = strings.TrimSpace(outString)
+	return outString, err
 }
 
 func GetCurrentBranch(repo repositories.Repository) (string, error) {
