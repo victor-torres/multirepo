@@ -69,7 +69,7 @@ func Status(config repositories.Config) error {
 		}
 		tabString := tabBuilder.String()
 
-		status, err := git.Status(repo)
+		status, err := git.GetStatus(repo)
 		if err != nil {
 			fmt.Printf("%s%s%s\n", repoName, tabString, color.RedString("✗ repository not found"))
 			continue
