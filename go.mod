@@ -1,4 +1,4 @@
-module git-subrepos
+module multirepo
 
 go 1.20
 

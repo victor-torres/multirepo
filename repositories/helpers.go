@@ -1,9 +1,9 @@
-package repos
+package repositories
 
 import (
 	"os"
-	"strings"
 	"path/filepath"
+	"strings"
 )
 
 func ResolveHomeDir(path string) (string, error) {
@@ -12,9 +12,9 @@ func ResolveHomeDir(path string) (string, error) {
 		return path, err
 	}
 
-    if strings.HasPrefix(path, "~/") {
-        path = filepath.Join(homeDir, path[2:])
-    }
+	if strings.HasPrefix(path, "~/") {
+		path = filepath.Join(homeDir, path[2:])
+	}
 
-    return path, nil
+	return path, nil
 }

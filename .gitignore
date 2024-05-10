@@ -21,4 +21,4 @@
 go.work
 
 # Binary build
-git-subrepos
+multirepo

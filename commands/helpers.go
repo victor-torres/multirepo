@@ -5,12 +5,12 @@ import (
 	"sort"
 	"strings"
 
-	"git-subrepos/repos"
+	"multirepo/repositories"
 
 	"github.com/fatih/color"
 )
 
-func PrintRepositoryCounter(config repos.Config) {
+func PrintRepositoryCounter(config repositories.Config) {
 	if len(config.Repos) == 1 {
 		fmt.Printf("%d repository detected\n\n", len(config.Repos))
 	} else {
@@ -18,7 +18,7 @@ func PrintRepositoryCounter(config repos.Config) {
 	}
 }
 
-func ParseDirtyStatus(status string, isDirty bool, currentBranch string, currentTags string, target repos.Target) DirtyStatus {
+func ParseDirtyStatus(status string, isDirty bool, currentBranch string, currentTags string, target repositories.Target) DirtyStatus {
 	var dirtyStatus DirtyStatus
 	if isDirty {
 		dirtyStatus.IsDirty = true
@@ -32,10 +32,10 @@ func ParseDirtyStatus(status string, isDirty bool, currentBranch string, current
 			dirtyStatus.Reasons = append(dirtyStatus.Reasons, "unmatching commit")
 		}
 	} else if target.Type == "tag" {
-	    // FIXME: currentTags might contain more than a single tag string,
-	    //        we should probably split by \n,
-	    //        and check if the resulting list contains the expected tag.
-	    if target.Name != currentTags {
+		// FIXME: currentTags might contain more than a single tag string,
+		//        we should probably split by \n,
+		//        and check if the resulting list contains the expected tag.
+		if target.Name != currentTags {
 			dirtyStatus.IsDirty = true
 			dirtyStatus.Reasons = append(dirtyStatus.Reasons, "unmatching tag")
 		}
@@ -55,7 +55,7 @@ func ParseDirtyStatus(status string, isDirty bool, currentBranch string, current
 	return dirtyStatus
 }
 
-func GetOrderedRepoNames(config repos.Config) []string {
+func GetOrderedRepoNames(config repositories.Config) []string {
 	var repoNames []string
 	for repoName := range config.Repos {
 		repoNames = append(repoNames, repoName)

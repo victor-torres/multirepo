@@ -1,4 +1,4 @@
-package repos
+package repositories
 
 import (
 	"errors"
@@ -25,7 +25,7 @@ func ParseConfig() (Config, error) {
 	return config, nil
 }
 
-func ParseTarget(repo Repo) (Target, error) {
+func ParseTarget(repo Repository) (Target, error) {
 	var target Target
 
 	if repo.Commit != "" {

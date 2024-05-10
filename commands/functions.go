@@ -6,23 +6,23 @@ import (
 	"os/exec"
 	"strings"
 
-	"git-subrepos/git"
-	"git-subrepos/repos"
+	"multirepo/git"
+	"multirepo/repositories"
 
 	"github.com/fatih/color"
 )
 
-func Sync(config repos.Config) error {
+func Sync(config repositories.Config) error {
 	PrintRepositoryCounter(config)
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		repoPath, err := repos.ResolveHomeDir(repo.Path)
+		repoPath, err := repositories.ResolveHomeDir(repo.Path)
 		if err != nil {
-		    log.Fatal(err)
+			log.Fatal(err)
 		}
 
-		target, err := repos.ParseTarget(repo)
+		target, err := repositories.ParseTarget(repo)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -49,7 +49,7 @@ func Sync(config repos.Config) error {
 	return Status(config)
 }
 
-func Status(config repos.Config) error {
+func Status(config repositories.Config) error {
 	PrintRepositoryCounter(config)
 
 	maxRepoNameLength := 0
@@ -75,13 +75,13 @@ func Status(config repos.Config) error {
 			continue
 		}
 
-		target, err := repos.ParseTarget(repo)
+		target, err := repositories.ParseTarget(repo)
 		if err != nil {
 			return err
 		}
 
-        currentBranch, err := git.GetCurrentBranch(repo)
-        currentTags, err := git.GetCurrentTags(repo)
+		currentBranch, err := git.GetCurrentBranch(repo)
+		currentTags, err := git.GetCurrentTags(repo)
 		isDirty, err := git.IsDirty(repo)
 		dirtyStatus := ParseDirtyStatus(status, isDirty, currentBranch, currentTags, target)
 		reasons := strings.Join(dirtyStatus.Reasons, ", ")
@@ -90,14 +90,14 @@ func Status(config repos.Config) error {
 	return nil
 }
 
-func Run(config repos.Config, command string, args []string) error {
+func Run(config repositories.Config, command string, args []string) error {
 	PrintRepositoryCounter(config)
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		repoPath, err := repos.ResolveHomeDir(repo.Path)
+		repoPath, err := repositories.ResolveHomeDir(repo.Path)
 		if err != nil {
-		    log.Fatal(err)
+			log.Fatal(err)
 		}
 		fmt.Printf("➜ %s$ %s %s\n", repoPath, command, strings.Join(args, " "))
 

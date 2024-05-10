@@ -5,14 +5,14 @@ import (
 	"os/exec"
 	"strings"
 
-	"git-subrepos/repos"
+	"multirepo/repositories"
 )
 
-func Exists(repo repos.Repo) bool {
-    repoPath, err := repos.ResolveHomeDir(repo.Path)
-    if err != nil {
-        return false
-    }
+func Exists(repo repositories.Repository) bool {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return false
+	}
 
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
@@ -23,11 +23,11 @@ func Exists(repo repos.Repo) bool {
 	return err == nil
 }
 
-func Status(repo repos.Repo) (string, error) {
-    repoPath, err := repos.ResolveHomeDir(repo.Path)
-    if err != nil {
-        return "", err
-    }
+func Status(repo repositories.Repository) (string, error) {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return "", err
+	}
 
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
@@ -46,11 +46,11 @@ func Status(repo repos.Repo) (string, error) {
 	return outString, err
 }
 
-func IsDirty(repo repos.Repo) (bool, error) {
-    repoPath, err := repos.ResolveHomeDir(repo.Path)
-    if err != nil {
-        return false, err
-    }
+func IsDirty(repo repositories.Repository) (bool, error) {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return false, err
+	}
 
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
@@ -63,11 +63,11 @@ func IsDirty(repo repos.Repo) (bool, error) {
 	return !strings.Contains(outString, "working tree clean"), err
 }
 
-func GetCurrentBranch(repo repos.Repo) (string, error) {
-    repoPath, err := repos.ResolveHomeDir(repo.Path)
-    if err != nil {
-        return "", err
-    }
+func GetCurrentBranch(repo repositories.Repository) (string, error) {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return "", err
+	}
 
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
@@ -81,11 +81,11 @@ func GetCurrentBranch(repo repos.Repo) (string, error) {
 	return outString, err
 }
 
-func GetCurrentTags(repo repos.Repo) (string, error) {
-    repoPath, err := repos.ResolveHomeDir(repo.Path)
-    if err != nil {
-        return "", err
-    }
+func GetCurrentTags(repo repositories.Repository) (string, error) {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return "", err
+	}
 
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
@@ -100,11 +100,11 @@ func GetCurrentTags(repo repos.Repo) (string, error) {
 	return outString, err
 }
 
-func Clone(repo repos.Repo) error {
-    repoPath, err := repos.ResolveHomeDir(repo.Path)
-    if err != nil {
-        return err
-    }
+func Clone(repo repositories.Repository) error {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return err
+	}
 
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "clone")
@@ -116,11 +116,11 @@ func Clone(repo repos.Repo) error {
 	return err
 }
 
-func Checkout(repo repos.Repo) error {
-    repoPath, err := repos.ResolveHomeDir(repo.Path)
-    if err != nil {
-        return err
-    }
+func Checkout(repo repositories.Repository) error {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return err
+	}
 
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")

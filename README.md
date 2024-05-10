@@ -1,6 +1,6 @@
-# git-subrepos
+# multirepo
 
-An alternative to git submodules written in Go
+An alternative to git submodules and monorepos written in Go
 
 ## How it works
 
@@ -8,7 +8,7 @@ You create a `subrepos.yaml` file inside your main repository,
 and define your git dependencies like this:
 
 ```yaml
-repos:
+repositories:
   alice-repo:
     path: alice-repo
     url: git@bitbucket.org:company/alice-repo.git
@@ -44,7 +44,7 @@ and checkout the reference
 specified in the `subrepos.yaml` file.
 
 ```shell
-$ git-subrepos sync
+$ multirepo sync
 4 repositories detected
 
 ➜ alice-repo$ git clone git@bitbucket.org:company/alice-repo.git
@@ -93,7 +93,7 @@ You can sync repositories how many times you want:
 You can also query the status of all git repositories:
 
 ```shell
-$git-subrepos status
+$ multirepo status
 4 repositories detected
 
 alice-repo                    ✗ commit 8c32bbbf474beb4fd95f6a57c6726adad5c946c7 (HEAD, -> alice-branch, origin/alice-branch) uncommited changes
@@ -105,7 +105,7 @@ dani-repo                     ✔ commit 93b5706409a74b1da30623f1036a2da87e856c7
 And there's a convenient method to run a command on all of them at once with:
 
 ```shell
-$git-subrepos run git stash
+$ multirepo run git stash
 ➜ alice-repo$ git stash
 Saved working directory and index state WIP on main: 8c32bbb Huge refactor
 

@@ -1,10 +1,10 @@
-package repos
+package repositories
 
 type Config struct {
-	Repos map[string]Repo `yaml:"repos,flow"`
+	Repos map[string]Repository `yaml:"repositories,flow"`
 }
 
-type Repo struct {
+type Repository struct {
 	Path   string `yaml:"path"`
 	URL    string `yaml:"url"`
 	Tag    string `yaml:"tag"`
