@@ -28,7 +28,14 @@ func Sync(config repositories.Config) error {
 		}
 
 		exists := git.Exists(repo)
-		if !exists {
+		if exists {
+			// Repository exists, let's fetch it!
+			fmt.Printf("➜ %s$ git fetch\n", repoPath)
+			err := git.Fetch(repo)
+			if err != nil {
+				return err
+			}
+		} else {
 			// Repository does not exist, let's clone it!
 			fmt.Printf("➜ %s$ git clone %s\n", repoPath, repo.URL)
 			err := git.Clone(repo)

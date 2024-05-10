@@ -23,6 +23,22 @@ func Exists(repo repositories.Repository) bool {
 	return err == nil
 }
 
+func Fetch(repo repositories.Repository) error {
+	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "fetch")
+
+	out, err := cmd.CombinedOutput()
+	fmt.Printf("%s", out)
+	return err
+}
+
 func GetStatus(repo repositories.Repository) (string, error) {
 	repoPath, err := repositories.ResolveHomeDir(repo.Path)
 	if err != nil {
