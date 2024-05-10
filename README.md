@@ -4,7 +4,7 @@ An alternative to git submodules and monorepos written in Go
 
 ## How it works
 
-You create a `subrepos.yaml` file inside your main repository,
+You create a `repositories.yaml` file inside your main repository,
 and define your git dependencies like this:
 
 ```yaml
