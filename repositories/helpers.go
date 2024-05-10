@@ -7,6 +7,7 @@ import (
 )
 
 func ResolveHomeDir(path string) (string, error) {
+	path = os.ExpandEnv(path)
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return path, err
