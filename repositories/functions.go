@@ -11,7 +11,7 @@ func ParseConfig() (Config, error) {
 	var config Config
 
 	// Load the YAML file
-	yamlFile, err := os.ReadFile("subrepos.yaml")
+	yamlFile, err := os.ReadFile("repositories.yaml")
 	if err != nil {
 		return config, err
 	}
