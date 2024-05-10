@@ -23,7 +23,7 @@ func Exists(repo repositories.Repository) bool {
 	return err == nil
 }
 
-func Status(repo repositories.Repository) (string, error) {
+func GetStatus(repo repositories.Repository) (string, error) {
 	repoPath, err := repositories.ResolveHomeDir(repo.Path)
 	if err != nil {
 		return "", err
