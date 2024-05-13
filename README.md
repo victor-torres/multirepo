@@ -30,8 +30,12 @@ go build
 sudo ln -sf multirepo /usr/local/bin/multirepo
 ```
 
-**Tip:** you can also rename the executable from `multirepo` to `mr`
-or create an alias so that it's easier to run commands on your terminal.
+**Tip:** you can also create an alias in your `.bashrc` or `.zshrc` file
+to make it easier to call our executable from your terminal:
+
+```shell
+alias mr=multirepo
+```
 
 ## Sync
 
