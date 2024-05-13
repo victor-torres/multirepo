@@ -17,7 +17,7 @@ func Sync(config repositories.Config) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		repoPath, err := repositories.ResolveHomeDir(repo.Path)
+		repoPath, err := repositories.ResolvePath(repo.Path)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -134,7 +134,7 @@ func Run(config repositories.Config, command string, args []string) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		repoPath, err := repositories.ResolveHomeDir(repo.Path)
+		repoPath, err := repositories.ResolvePath(repo.Path)
 		if err != nil {
 			log.Fatal(err)
 		}

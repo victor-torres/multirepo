@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 
@@ -10,6 +11,11 @@ import (
 )
 
 func main() {
+	err := godotenv.Load(".env")
+	if err == nil {
+		fmt.Printf("Loading environment variables from .env file\n")
+	}
+
 	config, err := repositories.ParseConfig()
 	if err != nil {
 		log.Fatal(err)

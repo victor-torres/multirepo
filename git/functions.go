@@ -9,7 +9,7 @@ import (
 )
 
 func Exists(repo repositories.Repository) bool {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return false
 	}
@@ -24,7 +24,7 @@ func Exists(repo repositories.Repository) bool {
 }
 
 func IsDirty(repo repositories.Repository) (bool, error) {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return false, err
 	}
@@ -41,7 +41,7 @@ func IsDirty(repo repositories.Repository) (bool, error) {
 }
 
 func GetCurrentCommit(repo repositories.Repository) (string, error) {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return "", err
 	}
@@ -61,7 +61,7 @@ func GetCurrentCommit(repo repositories.Repository) (string, error) {
 }
 
 func GetCurrentBranch(repo repositories.Repository) (string, error) {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return "", err
 	}
@@ -79,7 +79,7 @@ func GetCurrentBranch(repo repositories.Repository) (string, error) {
 }
 
 func GetCurrentTags(repo repositories.Repository) (string, error) {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return "", err
 	}
@@ -98,7 +98,7 @@ func GetCurrentTags(repo repositories.Repository) (string, error) {
 }
 
 func Clone(repo repositories.Repository) error {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func Clone(repo repositories.Repository) error {
 }
 
 func Checkout(repo repositories.Repository) error {
-	repoPath, err := repositories.ResolveHomeDir(repo.Path)
+	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return err
 	}
