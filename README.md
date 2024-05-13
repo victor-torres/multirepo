@@ -199,3 +199,19 @@ fastapi     ✔ 1c3e6918750ccb3f20ea260e9a4238ce2c0e5f63 (tag: 0.111.0)
 pydantic    ✔ 7061f36bc721ef4f173ef8f2e098f25e1eaea705  
 pytest      ✔ 93dd34e76d9c687d1c249fe8cf94bdf46813f783 (branch: main) 
 ```
+
+## Environment variables
+
+It's possible to use environment variables to define repository paths. For example:
+
+```yaml
+repositories:
+  fastapi:
+    path: $MY_BASE_DIRECTORY/fastapi
+    url: https://github.com/tiangolo/fastapi.git
+    tag: 0.111.0
+```
+
+If there's a `.env` file in the same location as the `repositories.yaml` file,
+we'll also try to load your environment variables automatically,
+so you don't need to manually export them.
