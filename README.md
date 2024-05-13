@@ -31,10 +31,11 @@ sudo ln -sf multirepo /usr/local/bin/multirepo
 ```
 
 **Tip:** you can also create an alias in your `.bashrc` or `.zshrc` file
-to make it easier to call our executable from your terminal:
+to make it easier to call our executable from your terminal. For example:
 
 ```shell
-alias mr=multirepo
+echo "alias mr=multirepo" >> ~/.zshrc
+source ~/.zshrc
 ```
 
 ## Sync
