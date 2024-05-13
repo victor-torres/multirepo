@@ -4,7 +4,31 @@ An alternative to git submodules and monorepos written in Go
 
 ## Install
 
-TODO
+You have two options to acquire the binary executable for this project:
+- download pre-compiled releases from Github ([click here](https://github.com/victor-torres/multirepo/releases/latest))
+- clone this repository and compile the project locally using go
+
+Once you have the executable binary on your machine,
+copy or link it to somewhere like `/usr/local/bin`
+or add its containing directory to your PATH environment variable. 
+
+Example:
+
+```shell
+cd /tmp
+wget https://github.com/victor-torres/multirepo/releases/download/v2.0.0/multirepo-v2.0.0-darwin-arm64.tar.gz
+tar -xvf multirepo-v2.0.0-darwin-arm64.tar.gz
+sudo mv multirepo /usr/local/bin/multirepo
+```
+
+Or compiling locally (depends on go-lang):
+
+```shell
+git clone https://github.com/victor-torres/multirepo.git
+go get
+go build
+sudo ln -sf multirepo /usr/local/bin/multirepo
+```
 
 ## Sync
 
