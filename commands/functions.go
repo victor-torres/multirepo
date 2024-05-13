@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os/exec"
@@ -129,10 +130,16 @@ func Status(config repositories.Config) error {
 	return nil
 }
 
-func Run(config repositories.Config, command string, args []string) error {
+func Run(config repositories.Config, repository string, command string, args []string) error {
 	PrintRepositoryCounter(config)
 	orderedRepoNames := GetOrderedRepoNames(config)
+	var success bool
 	for _, repoName := range orderedRepoNames {
+		if repository != "--all" && repoName != repository {
+			continue
+		}
+
+		success = true
 		repo := config.Repos[repoName]
 		repoPath, err := repositories.ResolvePath(repo.Path)
 		if err != nil {
@@ -153,6 +160,9 @@ func Run(config repositories.Config, command string, args []string) error {
 			log.Fatal(err)
 		}
 		fmt.Println(outString)
+	}
+	if !success {
+		return errors.New(fmt.Sprintf("Unknown repository '%s'", repository))
 	}
 	return nil
 }
