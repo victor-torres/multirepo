@@ -30,6 +30,9 @@ go build
 sudo ln -sf multirepo /usr/local/bin/multirepo
 ```
 
+**Tip:** you can also rename the executable from `multirepo` to `mr`
+or create an alias so that it's easier to run commands on your terminal.
+
 ## Sync
 
 Create a `repositories.yaml` file inside your main repository,
