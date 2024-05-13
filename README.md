@@ -16,8 +16,8 @@ Example:
 
 ```shell
 cd /tmp
-wget https://github.com/victor-torres/multirepo/releases/download/v2.0.0/multirepo-v2.0.0-darwin-arm64.tar.gz
-tar -xvf multirepo-v2.0.0-darwin-arm64.tar.gz
+wget https://github.com/victor-torres/multirepo/releases/download/v2.0.0/multirepo-v3.0.0-darwin-arm64.tar.gz
+tar -xvf multirepo-v3.0.0-darwin-arm64.tar.gz
 sudo mv multirepo /usr/local/bin/multirepo
 ```
 
