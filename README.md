@@ -34,8 +34,8 @@ sudo ln -sf multirepo /usr/local/bin/multirepo
 to make it easier to call our executable from your terminal. For example:
 
 ```shell
-echo "alias mr=multirepo" >> ~/.zshrc
-source ~/.zshrc
+echo "alias mr=multirepo" >> ~/.$(lsof -p $$ | cut -d " " -f 1 | tail -n 1)rc
+source ~/.$(lsof -p $$ | cut -d " " -f 1 | tail -n 1)rc
 ```
 
 ## Sync
