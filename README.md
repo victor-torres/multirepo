@@ -83,8 +83,6 @@ multirepo status
 This will produce a similar output:
 
 ```shell
-4 repositories detected
-
 3 repositories detected
 
 fastapi     ✔ 1c3e6918750ccb3f20ea260e9a4238ce2c0e5f63 (tag: 0.111.0) 
@@ -119,7 +117,7 @@ But it might be possible that you'll need to perform additional operations if:
 
 ## Run
 
-And guess what: there's a convenient method to run a command on all of them at once with:
+Guess what: there's a convenient method to run a command on all of them at once with:
 
 ```shell
 multirepo run --all git stash
