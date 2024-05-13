@@ -99,12 +99,12 @@ func Status(config repositories.Config) error {
 		} else if currentBranch != "" {
 			currentReference = fmt.Sprintf("branch: %s", currentBranch)
 		} else {
-			currentReference = commitHash
+			currentReference = commitHash[:7]
 		}
 
 		var targetString string
 		if target.Type == "commit" {
-			if target.Name != commitHash {
+			if target.Name[:7] != commitHash[:7] {
 				targetString = color.RedString(fmt.Sprintf("(%s ➜ %s)", target.Name, commitHash))
 				icon = color.RedString("✗")
 			}
