@@ -102,6 +102,11 @@ You can sync repositories how many times you want:
 - If the repository does not exist, it will be cloned.
 - If the repository is dirty, we'll abort the operation.
 
+You can also optionally specify these flags:
+
+- `--force` or `-f` to discard uncommited changes permanently
+- `--recurse` or `-r` to recursively checkout submodules
+
 ## Status
 
 For your convenience, we run a status command everytime you sync a `repositories.yaml` file.
