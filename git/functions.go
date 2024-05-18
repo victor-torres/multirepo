@@ -97,7 +97,7 @@ func GetCurrentTags(repo repositories.Repository) (string, error) {
 	return outString, err
 }
 
-func Clone(repo repositories.Repository) error {
+func Clone(repo repositories.Repository, recurse bool) error {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return err
@@ -108,12 +108,51 @@ func Clone(repo repositories.Repository) error {
 	cmd.Args = append(cmd.Args, repo.URL)
 	cmd.Args = append(cmd.Args, repoPath)
 
+	if recurse {
+		cmd.Args = append(cmd.Args, "--recurse-submodules")
+		cmd.Args = append(cmd.Args, "-j8")
+	}
+
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", out)
 	return err
 }
 
-func Checkout(repo repositories.Repository) error {
+func Stash(repo repositories.Repository) error {
+	repoPath, err := repositories.ResolvePath(repo.Path)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "stash")
+	cmd.Args = append(cmd.Args, "-u")
+
+	out, err := cmd.CombinedOutput()
+	fmt.Printf("%s", out)
+	return err
+}
+
+func StashDrop(repo repositories.Repository) error {
+	repoPath, err := repositories.ResolvePath(repo.Path)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "stash")
+	cmd.Args = append(cmd.Args, "drop")
+
+	out, err := cmd.CombinedOutput()
+	fmt.Printf("%s", out)
+	return err
+}
+
+func Checkout(repo repositories.Repository, recurse bool) error {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
 		return err
@@ -130,6 +169,10 @@ func Checkout(repo repositories.Repository) error {
 		cmd.Args = append(cmd.Args, repo.Tag)
 	} else if repo.Branch != "" {
 		cmd.Args = append(cmd.Args, repo.Branch)
+	}
+
+	if recurse {
+		cmd.Args = append(cmd.Args, "--recurse-submodules")
 	}
 
 	out, err := cmd.CombinedOutput()

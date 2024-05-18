@@ -5,6 +5,7 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
+	"slices"
 
 	"multirepo/commands"
 	"multirepo/repositories"
@@ -21,8 +22,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if len(os.Args) == 2 && os.Args[1] == "sync" {
-		err := commands.Sync(config)
+	if len(os.Args) >= 2 && os.Args[1] == "sync" {
+		force := slices.Contains(os.Args, "--force") || slices.Contains(os.Args, "-f")
+		recurse := slices.Contains(os.Args, "--recurse") || slices.Contains(os.Args, "-r")
+
+		err := commands.Sync(config, force, recurse)
 		if err != nil {
 			log.Fatal(err)
 		}

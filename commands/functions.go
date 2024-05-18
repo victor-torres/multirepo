@@ -13,7 +13,7 @@ import (
 	"github.com/fatih/color"
 )
 
-func Sync(config repositories.Config) error {
+func Sync(config repositories.Config, force bool, recurse bool) error {
 	PrintRepositoryCounter(config)
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
@@ -32,14 +32,25 @@ func Sync(config repositories.Config) error {
 		if !exists {
 			// Repository does not exist, let's clone it!
 			fmt.Printf("➜ %s$ git clone %s\n", repoPath, repo.URL)
-			err := git.Clone(repo)
+			err := git.Clone(repo, recurse)
 			if err != nil {
 				return err
 			}
 		}
 
+		if force {
+			fmt.Printf("➜ %s$ git stash -u\n", repoPath)
+			err = git.Stash(repo)
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("➜ %s$ git stash drop\n", repoPath)
+			_ = git.StashDrop(repo)
+		}
+
 		fmt.Printf("➜ %s$ git checkout %s\n", repoPath, target.Name)
-		err = git.Checkout(repo)
+		err = git.Checkout(repo, recurse)
 		if err != nil {
 			return err
 		}
