@@ -113,6 +113,7 @@ func Clone(repo repositories.Repository, recurse bool) error {
 		cmd.Args = append(cmd.Args, "-j8")
 	}
 
+	fmt.Printf("➜ %s$ git clone %s %s\n", repoPath, repo.URL, strings.Join(cmd.Args[3:], " "))
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", out)
 	return err
@@ -130,6 +131,7 @@ func Stash(repo repositories.Repository) error {
 	cmd.Args = append(cmd.Args, "stash")
 	cmd.Args = append(cmd.Args, "-u")
 
+	fmt.Printf("➜ %s$ git stash -u\n", repoPath)
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", out)
 	return err
@@ -147,6 +149,7 @@ func StashDrop(repo repositories.Repository) error {
 	cmd.Args = append(cmd.Args, "stash")
 	cmd.Args = append(cmd.Args, "drop")
 
+	fmt.Printf("➜ %s$ git stash drop\n", repoPath)
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", out)
 	return err
@@ -175,6 +178,7 @@ func Checkout(repo repositories.Repository, recurse bool) error {
 		cmd.Args = append(cmd.Args, "--recurse-submodules")
 	}
 
+	fmt.Printf("➜ %s$ git checkout %s\n", repoPath, strings.Join(cmd.Args[4:], " "))
 	out, err := cmd.CombinedOutput()
 	fmt.Printf("%s", out)
 	return err

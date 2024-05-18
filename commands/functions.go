@@ -18,20 +18,9 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
-		repoPath, err := repositories.ResolvePath(repo.Path)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		target, err := repositories.ParseTarget(repo)
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		exists := git.Exists(repo)
 		if !exists {
 			// Repository does not exist, let's clone it!
-			fmt.Printf("➜ %s$ git clone %s\n", repoPath, repo.URL)
 			err := git.Clone(repo, recurse)
 			if err != nil {
 				return err
@@ -39,18 +28,14 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 		}
 
 		if force {
-			fmt.Printf("➜ %s$ git stash -u\n", repoPath)
-			err = git.Stash(repo)
+			err := git.Stash(repo)
 			if err != nil {
 				return err
 			}
-
-			fmt.Printf("➜ %s$ git stash drop\n", repoPath)
 			_ = git.StashDrop(repo)
 		}
 
-		fmt.Printf("➜ %s$ git checkout %s\n", repoPath, target.Name)
-		err = git.Checkout(repo, recurse)
+		err := git.Checkout(repo, recurse)
 		if err != nil {
 			return err
 		}
