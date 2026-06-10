@@ -3,7 +3,6 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os/exec"
 	"slices"
 	"strings"
@@ -151,7 +150,7 @@ func Run(config repositories.Config, repository string, command string, args []s
 		repo := config.Repos[repoName]
 		repoPath, err := repositories.ResolvePath(repo.Path)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		fmt.Printf("➜ %s$ %s %s\n", repoPath, command, strings.Join(args, " "))
 
@@ -163,11 +162,10 @@ func Run(config repositories.Config, repository string, command string, args []s
 		}
 
 		out, err := cmd.CombinedOutput()
-		outString := string(out)
+		fmt.Println(string(out))
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		fmt.Println(outString)
 	}
 	if !success {
 		return errors.New(fmt.Sprintf("Unknown repository '%s'", repository))
