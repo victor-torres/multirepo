@@ -97,6 +97,66 @@ func GetCurrentTags(repo repositories.Repository) (string, error) {
 	return outString, err
 }
 
+// RefExists reports whether ref resolves to a commit that is available
+// locally. It accepts branches, tags, and (abbreviated) commit hashes.
+func RefExists(repo repositories.Repository, ref string) bool {
+	repoPath, err := repositories.ResolvePath(repo.Path)
+	if err != nil {
+		return false
+	}
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "rev-parse")
+	cmd.Args = append(cmd.Args, "--verify")
+	cmd.Args = append(cmd.Args, "--quiet")
+	cmd.Args = append(cmd.Args, ref+"^{commit}")
+
+	_, err = cmd.CombinedOutput()
+	return err == nil
+}
+
+func Fetch(repo repositories.Repository) error {
+	repoPath, err := repositories.ResolvePath(repo.Path)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "fetch")
+	cmd.Args = append(cmd.Args, "--tags")
+
+	fmt.Printf("➜ %s$ git fetch --tags\n", repoPath)
+	out, err := cmd.CombinedOutput()
+	fmt.Printf("%s", out)
+	return err
+}
+
+// FastForward advances the checked-out branch to origin/<branch>. It is
+// a no-op when the branch is already up to date or ahead of origin, and
+// fails when the histories have diverged (never discards local commits).
+func FastForward(repo repositories.Repository, branch string) error {
+	repoPath, err := repositories.ResolvePath(repo.Path)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("git")
+	cmd.Args = append(cmd.Args, "-C")
+	cmd.Args = append(cmd.Args, repoPath)
+	cmd.Args = append(cmd.Args, "merge")
+	cmd.Args = append(cmd.Args, "--ff-only")
+	cmd.Args = append(cmd.Args, "origin/"+branch)
+
+	fmt.Printf("➜ %s$ git merge --ff-only origin/%s\n", repoPath, branch)
+	out, err := cmd.CombinedOutput()
+	fmt.Printf("%s", out)
+	return err
+}
+
 func Clone(repo repositories.Repository, recurse bool) error {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {

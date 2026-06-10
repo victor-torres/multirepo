@@ -18,10 +18,23 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 	orderedRepoNames := GetOrderedRepoNames(config)
 	for _, repoName := range orderedRepoNames {
 		repo := config.Repos[repoName]
+		target, err := repositories.ParseTarget(repo)
+		if err != nil {
+			return err
+		}
+
 		exists := git.Exists(repo)
 		if !exists {
 			// Repository does not exist, let's clone it!
 			err := git.Clone(repo, recurse)
+			if err != nil {
+				return err
+			}
+		} else if target.Type == "branch" || !git.RefExists(repo, target.Name) {
+			// Branch targets always fetch so the local branch can be
+			// fast-forwarded; tag and commit targets only fetch when the
+			// reference is not available locally yet.
+			err := git.Fetch(repo)
 			if err != nil {
 				return err
 			}
@@ -43,9 +56,18 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 			}
 		}
 
-		err := git.Checkout(repo, recurse)
+		err = git.Checkout(repo, recurse)
 		if err != nil {
 			return err
+		}
+
+		// A branch checkout lands on the local branch, which may be
+		// behind the remote: fast-forward it to origin when possible.
+		if target.Type == "branch" && git.RefExists(repo, "origin/"+target.Name) {
+			err := git.FastForward(repo, target.Name)
+			if err != nil {
+				return err
+			}
 		}
 
 		fmt.Println()

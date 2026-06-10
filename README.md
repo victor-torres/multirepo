@@ -146,11 +146,11 @@ pytest      ✗ 940b78232e48c34501cfe6e0bfd0ea6d64f4521b (branch: main ➜ 940b7
 ```
 
 If you're just on the wrong reference, you can simply run the sync command again.
-But it might be possible that you'll need to perform additional operations if:
+Sync automatically fetches from the remote when the configured reference
+is not available locally, and fast-forwards branch targets to their
+remote counterpart. But you'll need to perform additional operations if:
 - you have uncommited changes
-  - you need to stash or revert your changes
-- you don't have all the references locally
-  - you need to fetch references from remote
+  - you need to stash or revert your changes (or sync with `--force`)
 
 ## Run
 
