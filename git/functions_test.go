@@ -78,6 +78,25 @@ func TestIsDirtyUntrackedFile(t *testing.T) {
 	}
 }
 
+// IsDirty greps the human-readable `git status --long` output for the
+// English phrase "working tree clean". That breaks whenever the phrase
+// appears for another reason (here: an untracked file whose name contains
+// it) and on any non-English locale, where the phrase never appears and
+// every clean repository is reported dirty. Parsing `--porcelain` output
+// is locale-independent and unambiguous.
+func TestIsDirtyDoesNotParseHumanReadableOutput(t *testing.T) {
+	clone := testutil.CloneRepo(t, testutil.CreateOriginRepo(t))
+	testutil.WriteFile(t, clone, "nothing to commit, working tree clean", "untracked\n")
+
+	dirty, err := git.IsDirty(repoAt(clone))
+	if err != nil {
+		t.Fatalf("IsDirty returned error: %v", err)
+	}
+	if !dirty {
+		t.Error("IsDirty = false for a dirty repository whose untracked file name contains the phrase 'working tree clean'")
+	}
+}
+
 func TestIsDirtyMissingRepository(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "does-not-exist")
 

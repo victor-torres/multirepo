@@ -29,15 +29,19 @@ func IsDirty(repo repositories.Repository) (bool, error) {
 		return false, err
 	}
 
+	// --porcelain is stable, locale-independent, and empty exactly when
+	// the working tree is clean, unlike the human-readable output.
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
 	cmd.Args = append(cmd.Args, repoPath)
 	cmd.Args = append(cmd.Args, "status")
-	cmd.Args = append(cmd.Args, "--long")
+	cmd.Args = append(cmd.Args, "--porcelain")
 
 	out, err := cmd.CombinedOutput()
-	outString := string(out)
-	return !strings.Contains(outString, "working tree clean"), err
+	if err != nil {
+		return false, err
+	}
+	return strings.TrimSpace(string(out)) != "", nil
 }
 
 func GetCurrentCommit(repo repositories.Repository) (string, error) {
