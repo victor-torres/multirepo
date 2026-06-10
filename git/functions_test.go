@@ -210,11 +210,10 @@ func TestClone(t *testing.T) {
 	dest := filepath.Join(t.TempDir(), "clone")
 	repo := repositories.Repository{Path: dest, URL: origin}
 
-	output := testutil.CaptureStdout(t, func() {
-		if err := git.Clone(repo, false); err != nil {
-			t.Errorf("Clone returned error: %v", err)
-		}
-	})
+	output, err := git.Clone(repo, false)
+	if err != nil {
+		t.Errorf("Clone returned error: %v", err)
+	}
 
 	if _, err := os.Stat(filepath.Join(dest, "file.txt")); err != nil {
 		t.Errorf("cloned repository is missing file.txt: %v", err)
@@ -232,11 +231,9 @@ func TestCloneRecurse(t *testing.T) {
 	dest := filepath.Join(t.TempDir(), "clone")
 	repo := repositories.Repository{Path: dest, URL: origin}
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Clone(repo, true); err != nil {
-			t.Errorf("Clone with recurse returned error: %v", err)
-		}
-	})
+	if _, err := git.Clone(repo, true); err != nil {
+		t.Errorf("Clone with recurse returned error: %v", err)
+	}
 
 	if !git.Exists(repo) {
 		t.Error("Exists = false after Clone with recurse")
@@ -250,11 +247,9 @@ func TestCloneInvalidURL(t *testing.T) {
 		URL:  filepath.Join(t.TempDir(), "no-such-origin"),
 	}
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Clone(repo, false); err == nil {
-			t.Error("expected an error when cloning a nonexistent origin, got nil")
-		}
-	})
+	if _, err := git.Clone(repo, false); err == nil {
+		t.Error("expected an error when cloning a nonexistent origin, got nil")
+	}
 }
 
 func TestCheckoutTag(t *testing.T) {
@@ -262,11 +257,9 @@ func TestCheckoutTag(t *testing.T) {
 	clone := testutil.CloneRepo(t, origin)
 	repo := repositories.Repository{Path: clone, URL: origin, Tag: "v1.0.0"}
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Checkout(repo, false); err != nil {
-			t.Errorf("Checkout returned error: %v", err)
-		}
-	})
+	if _, err := git.Checkout(repo, false); err != nil {
+		t.Errorf("Checkout returned error: %v", err)
+	}
 
 	want := testutil.RunGit(t, origin, "rev-parse", "v1.0.0^{commit}")
 	got := testutil.RunGit(t, clone, "rev-parse", "HEAD")
@@ -280,11 +273,9 @@ func TestCheckoutBranch(t *testing.T) {
 	clone := testutil.CloneRepo(t, origin)
 	repo := repositories.Repository{Path: clone, URL: origin, Branch: "feature"}
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Checkout(repo, false); err != nil {
-			t.Errorf("Checkout returned error: %v", err)
-		}
-	})
+	if _, err := git.Checkout(repo, false); err != nil {
+		t.Errorf("Checkout returned error: %v", err)
+	}
 
 	got := testutil.RunGit(t, clone, "branch", "--show-current")
 	if got != "feature" {
@@ -298,11 +289,9 @@ func TestCheckoutCommit(t *testing.T) {
 	want := testutil.RunGit(t, origin, "rev-parse", "v1.0.0^{commit}")
 	repo := repositories.Repository{Path: clone, URL: origin, Commit: want}
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Checkout(repo, false); err != nil {
-			t.Errorf("Checkout returned error: %v", err)
-		}
-	})
+	if _, err := git.Checkout(repo, false); err != nil {
+		t.Errorf("Checkout returned error: %v", err)
+	}
 
 	got := testutil.RunGit(t, clone, "rev-parse", "HEAD")
 	if got != want {
@@ -315,11 +304,9 @@ func TestCheckoutMissingReference(t *testing.T) {
 	clone := testutil.CloneRepo(t, origin)
 	repo := repositories.Repository{Path: clone, URL: origin, Branch: "does-not-exist"}
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Checkout(repo, false); err == nil {
-			t.Error("expected an error when checking out a missing reference, got nil")
-		}
-	})
+	if _, err := git.Checkout(repo, false); err == nil {
+		t.Error("expected an error when checking out a missing reference, got nil")
+	}
 }
 
 func TestStashAndStashDrop(t *testing.T) {
@@ -327,11 +314,9 @@ func TestStashAndStashDrop(t *testing.T) {
 	testutil.WriteFile(t, clone, "file.txt", "dirty content\n")
 	repo := repoAt(clone)
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Stash(repo); err != nil {
-			t.Fatalf("Stash returned error: %v", err)
-		}
-	})
+	if _, err := git.Stash(repo); err != nil {
+		t.Fatalf("Stash returned error: %v", err)
+	}
 
 	dirty, err := git.IsDirty(repo)
 	if err != nil {
@@ -341,11 +326,9 @@ func TestStashAndStashDrop(t *testing.T) {
 		t.Error("repository is still dirty after Stash")
 	}
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.StashDrop(repo); err != nil {
-			t.Errorf("StashDrop returned error: %v", err)
-		}
-	})
+	if _, err := git.StashDrop(repo); err != nil {
+		t.Errorf("StashDrop returned error: %v", err)
+	}
 
 	stashList := testutil.RunGit(t, clone, "stash", "list")
 	if stashList != "" {
@@ -358,11 +341,9 @@ func TestStashUntrackedFile(t *testing.T) {
 	testutil.WriteFile(t, clone, "new-file.txt", "untracked\n")
 	repo := repoAt(clone)
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.Stash(repo); err != nil {
-			t.Fatalf("Stash returned error: %v", err)
-		}
-	})
+	if _, err := git.Stash(repo); err != nil {
+		t.Fatalf("Stash returned error: %v", err)
+	}
 
 	if _, err := os.Stat(filepath.Join(clone, "new-file.txt")); !os.IsNotExist(err) {
 		t.Error("untracked file still present after Stash -u")
@@ -372,9 +353,7 @@ func TestStashUntrackedFile(t *testing.T) {
 func TestStashDropWithoutStash(t *testing.T) {
 	clone := testutil.CloneRepo(t, testutil.CreateOriginRepo(t))
 
-	testutil.CaptureStdout(t, func() {
-		if err := git.StashDrop(repoAt(clone)); err == nil {
-			t.Error("expected an error when dropping a nonexistent stash, got nil")
-		}
-	})
+	if _, err := git.StashDrop(repoAt(clone)); err == nil {
+		t.Error("expected an error when dropping a nonexistent stash, got nil")
+	}
 }

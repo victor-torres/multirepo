@@ -30,7 +30,7 @@ func TestStatusCleanTag(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -56,7 +56,7 @@ func TestStatusCleanBranch(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -77,7 +77,7 @@ func TestStatusCleanCommit(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -97,7 +97,7 @@ func TestStatusWrongBranch(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -121,7 +121,7 @@ func TestStatusUncommittedChanges(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -144,7 +144,7 @@ func TestStatusRepositoryNotFound(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -169,7 +169,7 @@ func TestStatusShortCommitHashDoesNotPanic(t *testing.T) {
 	var panicked interface{}
 	testutil.CaptureStdout(t, func() {
 		defer func() { panicked = recover() }()
-		_ = commands.Status(config, "")
+		_ = commands.Status(config, "", 2)
 	})
 
 	if panicked != nil {
@@ -192,7 +192,7 @@ func TestStatusMultipleTagsOnTargetCommit(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -221,7 +221,7 @@ func TestStatusReturnsErrorWhenGitStatusFails(t *testing.T) {
 
 	var err error
 	testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "")
+		err = commands.Status(config, "", 2)
 	})
 
 	if err == nil {
@@ -240,7 +240,7 @@ func TestSyncClonesMissingRepository(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, false, false)
+		err = commands.Sync(config, false, false, 2)
 	})
 	if err != nil {
 		t.Fatalf("Sync returned error: %v\n%s", err, output)
@@ -269,7 +269,7 @@ func TestSyncChecksOutTargetReference(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, false, false)
+		err = commands.Sync(config, false, false, 2)
 	})
 	if err != nil {
 		t.Fatalf("Sync returned error: %v\n%s", err, output)
@@ -291,7 +291,7 @@ func TestSyncIsIdempotent(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var err error
 		output := testutil.CaptureStdout(t, func() {
-			err = commands.Sync(config, false, false)
+			err = commands.Sync(config, false, false, 2)
 		})
 		if err != nil {
 			t.Fatalf("Sync run %d returned error: %v\n%s", i+1, err, output)
@@ -312,7 +312,7 @@ func TestSyncAbortsOnDirtyRepository(t *testing.T) {
 
 	var err error
 	testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, false, false)
+		err = commands.Sync(config, false, false, 2)
 	})
 
 	if err == nil {
@@ -336,7 +336,7 @@ func TestSyncFetchesNewTagFromOrigin(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, false, false)
+		err = commands.Sync(config, false, false, 2)
 	})
 	if err != nil {
 		t.Fatalf("Sync returned error for a tag that exists in origin but not locally: %v\n%s", err, output)
@@ -364,7 +364,7 @@ func TestSyncFastForwardsBranchToOrigin(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, false, false)
+		err = commands.Sync(config, false, false, 2)
 	})
 	if err != nil {
 		t.Fatalf("Sync returned error: %v\n%s", err, output)
@@ -391,7 +391,7 @@ func TestSyncTagTargetWorksWithoutRemote(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, false, false)
+		err = commands.Sync(config, false, false, 2)
 	})
 	if err != nil {
 		t.Fatalf("Sync should not need the remote for a locally available tag: %v\n%s", err, output)
@@ -408,7 +408,7 @@ func TestSyncForceDiscardsUncommittedChanges(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, true, false)
+		err = commands.Sync(config, true, false, 2)
 	})
 	if err != nil {
 		t.Fatalf("Sync --force returned error: %v\n%s", err, output)
@@ -445,7 +445,7 @@ func TestSyncForcePreservesExistingStashOnCleanTree(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Sync(config, true, false)
+		err = commands.Sync(config, true, false, 2)
 	})
 	if err != nil {
 		t.Fatalf("Sync --force returned error: %v\n%s", err, output)
@@ -593,7 +593,7 @@ func TestStatusJSONOutput(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "json")
+		err = commands.Status(config, "json", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status json returned error: %v", err)
@@ -634,7 +634,7 @@ func TestStatusMarkdownOutput(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "md")
+		err = commands.Status(config, "md", 2)
 	})
 	if err != nil {
 		t.Fatalf("Status md returned error: %v", err)
@@ -660,9 +660,114 @@ func TestStatusUnknownFormat(t *testing.T) {
 
 	var err error
 	testutil.CaptureStdout(t, func() {
-		err = commands.Status(config, "xml")
+		err = commands.Status(config, "xml", 2)
 	})
 	if err == nil {
 		t.Error("expected an error for an unknown status format, got nil")
+	}
+}
+
+// --- Parallel execution ---
+
+// Sync runs repositories concurrently (bounded by jobs), but the output
+// blocks and the final status must still appear in repository name
+// order, never interleaved.
+func TestSyncParallelClonesAllAndKeepsOrderedOutput(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	base := t.TempDir()
+	names := []string{"alpha", "bravo", "charlie", "delta", "echo", "foxtrot"}
+	repos := map[string]repositories.Repository{}
+	for _, name := range names {
+		repos[name] = repositories.Repository{
+			Path: filepath.Join(base, name), URL: origin, Tag: "v1.0.0",
+		}
+	}
+	config := repositories.Config{Repos: repos}
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Sync(config, false, false, 4)
+	})
+	if err != nil {
+		t.Fatalf("parallel Sync returned error: %v\n%s", err, output)
+	}
+
+	for _, name := range names {
+		if _, statErr := os.Stat(filepath.Join(base, name, "file.txt")); statErr != nil {
+			t.Errorf("repository %s was not synced: %v", name, statErr)
+		}
+	}
+
+	lastIndex := -1
+	for _, name := range names {
+		marker := "➜ " + filepath.Join(base, name)
+		idx := strings.Index(output, marker)
+		if idx == -1 {
+			t.Errorf("no output block for repository %s:\n%s", name, output)
+			continue
+		}
+		if idx < lastIndex {
+			t.Errorf("output block for %s appears out of order", name)
+		}
+		lastIndex = idx
+	}
+}
+
+// All sync failures must be reported, not just the first one.
+func TestSyncParallelReportsAllFailures(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	cloneA := testutil.CloneRepo(t, origin)
+	cloneB := testutil.CloneRepo(t, origin)
+	testutil.WriteFile(t, cloneA, "file.txt", "dirty A\n")
+	testutil.WriteFile(t, cloneB, "file.txt", "dirty B\n")
+	config := repositories.Config{Repos: map[string]repositories.Repository{
+		"alpha": {Path: cloneA, URL: origin, Branch: "main"},
+		"beta":  {Path: cloneB, URL: origin, Branch: "main"},
+	}}
+
+	var err error
+	testutil.CaptureStdout(t, func() {
+		err = commands.Sync(config, false, false, 2)
+	})
+	if err == nil {
+		t.Fatal("expected an error when repositories are dirty, got nil")
+	}
+	if !strings.Contains(err.Error(), "alpha") || !strings.Contains(err.Error(), "beta") {
+		t.Errorf("error = %q, want both alpha and beta reported", err)
+	}
+}
+
+// Status rows must come back in name order regardless of the
+// concurrency level used for collection.
+func TestStatusParallelKeepsRowOrder(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	repos := map[string]repositories.Repository{}
+	names := []string{"alpha", "bravo", "charlie", "delta", "echo"}
+	for _, name := range names {
+		repos[name] = repositories.Repository{
+			Path: testutil.CloneRepo(t, origin), URL: origin, Branch: "main",
+		}
+	}
+	config := repositories.Config{Repos: repos}
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Status(config, "json", 5)
+	})
+	if err != nil {
+		t.Fatalf("Status returned error: %v", err)
+	}
+
+	var rows []commands.StatusRow
+	if jsonErr := json.Unmarshal([]byte(output), &rows); jsonErr != nil {
+		t.Fatalf("invalid JSON: %v", jsonErr)
+	}
+	if len(rows) != len(names) {
+		t.Fatalf("got %d rows, want %d", len(rows), len(names))
+	}
+	for i, name := range names {
+		if rows[i].Name != name {
+			t.Errorf("row %d = %s, want %s (name order)", i, rows[i].Name, name)
+		}
 	}
 }

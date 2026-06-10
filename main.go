@@ -6,10 +6,37 @@ import (
 	"log"
 	"os"
 	"slices"
+	"strconv"
+	"strings"
 
 	"multirepo/commands"
 	"multirepo/repositories"
 )
+
+// parseJobs returns the value of --jobs/-j (or --jobs=N), defaulting to
+// commands.DefaultJobs. Invalid values exit with usage.
+func parseJobs(args []string) int {
+	for i, arg := range args {
+		var value string
+		if arg == "--jobs" || arg == "-j" {
+			if i+1 < len(args) {
+				value = args[i+1]
+			}
+		} else if strings.HasPrefix(arg, "--jobs=") {
+			value = strings.TrimPrefix(arg, "--jobs=")
+		} else {
+			continue
+		}
+
+		jobs, err := strconv.Atoi(value)
+		if err != nil || jobs < 1 {
+			fmt.Printf("invalid --jobs value '%s': expected a positive number\n", value)
+			os.Exit(1)
+		}
+		return jobs
+	}
+	return commands.DefaultJobs
+}
 
 // loadConfig loads environment variables from an optional .env file and
 // parses repositories.yaml, exiting on failure. It is only called for
@@ -35,7 +62,7 @@ func main() {
 		force := slices.Contains(os.Args, "--force") || slices.Contains(os.Args, "-f")
 		recurse := slices.Contains(os.Args, "--recurse") || slices.Contains(os.Args, "-r")
 
-		err := commands.Sync(loadConfig(), force, recurse)
+		err := commands.Sync(loadConfig(), force, recurse, parseJobs(os.Args))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -54,7 +81,7 @@ func main() {
 			format = "md"
 		}
 
-		err := commands.Status(loadConfig(), format)
+		err := commands.Status(loadConfig(), format, parseJobs(os.Args))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -71,8 +98,8 @@ func main() {
 		fmt.Println()
 		fmt.Println("These are common commands used in various situations:")
 		fmt.Println()
-		fmt.Println("multirepo sync\t\t\t\t\t\t\tClone repositories and checkout the specified reference.")
-		fmt.Println("multirepo status [--json | --md]\t\t\t\tDisplay status for each one of the repositories.")
+		fmt.Println("multirepo sync [--jobs N]\t\t\t\t\t\t\tClone repositories and checkout the specified reference.")
+		fmt.Println("multirepo status [--json | --md] [--jobs N]\t\t\t\tDisplay status for each one of the repositories.")
 		fmt.Println("multirepo run <repository name | --all> <command> [<args>]\tRun an arbitrary command inside one or all repositories.")
 		os.Exit(1)
 	}
