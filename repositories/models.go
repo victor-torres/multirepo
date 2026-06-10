@@ -10,6 +10,9 @@ type Repository struct {
 	Tag    string `yaml:"tag"`
 	Branch string `yaml:"branch"`
 	Commit string `yaml:"commit"`
+	// Depth limits how much history is cloned (git clone --depth).
+	// Zero or absent means a full clone.
+	Depth int `yaml:"depth"`
 }
 
 type Target struct {

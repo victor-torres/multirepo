@@ -60,6 +60,17 @@ func CreateOriginRepo(t *testing.T) string {
 	return dir
 }
 
+// FileURL converts a local directory path to a file:// URL. Git silently
+// ignores --depth for plain local-path clones; the file:// transport
+// honors it.
+func FileURL(path string) string {
+	p := filepath.ToSlash(path)
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	return "file://" + p
+}
+
 // CloneRepo clones src into a new temp directory and returns the clone path.
 func CloneRepo(t *testing.T, src string) string {
 	t.Helper()

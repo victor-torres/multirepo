@@ -30,6 +30,15 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 			if err != nil {
 				return err
 			}
+			// A shallow clone may not contain the target reference
+			// (only the default branch tip is fetched), so fall back
+			// to a fetch when it is missing.
+			if !git.RefExists(repo, target.Name) {
+				err := git.Fetch(repo)
+				if err != nil {
+					return err
+				}
+			}
 		} else if target.Type == "branch" || !git.RefExists(repo, target.Name) {
 			// Branch targets always fetch so the local branch can be
 			// fast-forwarded; tag and commit targets only fetch when the
