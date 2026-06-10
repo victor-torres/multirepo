@@ -101,7 +101,9 @@ func Status(config repositories.Config) error {
 
 		var targetString string
 		if target.Type == "commit" {
-			if target.Name[:7] != commitHash[:7] {
+			// Abbreviated commit hashes are prefixes of the full hash,
+			// so prefix matching supports any abbreviation length.
+			if !strings.HasPrefix(commitHash, target.Name) {
 				targetString = color.RedString(fmt.Sprintf("(%s ➜ %s)", target.Name, commitHash))
 				icon = color.RedString("✗")
 			}
