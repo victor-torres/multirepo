@@ -11,7 +11,11 @@ import (
 	"multirepo/repositories"
 )
 
-func main() {
+// loadConfig loads environment variables from an optional .env file and
+// parses repositories.yaml, exiting on failure. It is only called for
+// commands that actually need the config, so usage output stays
+// available outside configured directories.
+func loadConfig() repositories.Config {
 	err := godotenv.Load(".env")
 	if err == nil {
 		fmt.Printf("Loading environment variables from .env file\n")
@@ -22,16 +26,20 @@ func main() {
 		log.Fatal(err)
 	}
 
+	return config
+}
+
+func main() {
 	if len(os.Args) >= 2 && os.Args[1] == "sync" {
 		force := slices.Contains(os.Args, "--force") || slices.Contains(os.Args, "-f")
 		recurse := slices.Contains(os.Args, "--recurse") || slices.Contains(os.Args, "-r")
 
-		err := commands.Sync(config, force, recurse)
+		err := commands.Sync(loadConfig(), force, recurse)
 		if err != nil {
 			log.Fatal(err)
 		}
 	} else if len(os.Args) == 2 && os.Args[1] == "status" {
-		err := commands.Status(config)
+		err := commands.Status(loadConfig())
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -39,7 +47,7 @@ func main() {
 		fmt.Println("usage: multirepo run <repository name | --all> <command> [<args>]")
 		os.Exit(1)
 	} else if len(os.Args) > 2 && os.Args[1] == "run" {
-		err := commands.Run(config, os.Args[2], os.Args[3], os.Args[4:])
+		err := commands.Run(loadConfig(), os.Args[2], os.Args[3], os.Args[4:])
 		if err != nil {
 			log.Fatal(err)
 		}
