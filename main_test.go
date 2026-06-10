@@ -211,3 +211,46 @@ repositories:
 		t.Fatalf("repository was not cloned at the .env-resolved path: %v", err)
 	}
 }
+
+// Locking pins branch-tracked repositories to exact commits: after the
+// origin advances, sync --locked must stay on the locked commit while a
+// plain sync follows the branch.
+func TestLockAndSyncLockedEndToEnd(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin)
+	workDir := t.TempDir()
+	writeConfig(t, workDir, fmt.Sprintf(`
+repositories:
+  myrepo:
+    path: %s
+    url: %s
+    branch: main
+`, clone, origin))
+
+	output, exitCode := runBinary(t, workDir, "lock")
+	if exitCode != 0 {
+		t.Fatalf("lock exit code = %d, want 0\n%s", exitCode, output)
+	}
+	lockedCommit := testutil.RunGit(t, clone, "rev-parse", "HEAD")
+
+	// Advance origin's main past the locked commit.
+	testutil.WriteFile(t, origin, "file.txt", "third version\n")
+	testutil.RunGit(t, origin, "add", ".")
+	testutil.RunGit(t, origin, "commit", "-m", "third commit")
+
+	output, exitCode = runBinary(t, workDir, "sync", "--locked")
+	if exitCode != 0 {
+		t.Fatalf("sync --locked exit code = %d, want 0\n%s", exitCode, output)
+	}
+	if got := testutil.RunGit(t, clone, "rev-parse", "HEAD"); got != lockedCommit {
+		t.Errorf("HEAD after sync --locked = %s, want locked commit %s", got, lockedCommit)
+	}
+
+	output, exitCode = runBinary(t, workDir, "sync")
+	if exitCode != 0 {
+		t.Fatalf("plain sync exit code = %d, want 0\n%s", exitCode, output)
+	}
+	if got, want := testutil.RunGit(t, clone, "rev-parse", "HEAD"), testutil.RunGit(t, origin, "rev-parse", "main"); got != want {
+		t.Errorf("HEAD after plain sync = %s, want origin main %s", got, want)
+	}
+}

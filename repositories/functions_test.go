@@ -154,3 +154,52 @@ func TestParseTargetMissingReference(t *testing.T) {
 		t.Error("expected an error when no commit, tag, or branch is set, got nil")
 	}
 }
+
+func TestApplyLockOverridesTargets(t *testing.T) {
+	config := repositories.Config{Repos: map[string]repositories.Repository{
+		"alpha": {Path: "/tmp/alpha", URL: "u", Branch: "main"},
+		"beta":  {Path: "/tmp/beta", URL: "u", Tag: "v1.0.0"},
+	}}
+	lock := repositories.LockConfig{Repos: map[string]repositories.LockedRepository{
+		"alpha": {Commit: "1111111111111111111111111111111111111111"},
+		"beta":  {Commit: "2222222222222222222222222222222222222222"},
+	}}
+
+	locked, err := repositories.ApplyLock(config, lock)
+	if err != nil {
+		t.Fatalf("ApplyLock returned error: %v", err)
+	}
+
+	alpha := locked.Repos["alpha"]
+	if alpha.Commit != "1111111111111111111111111111111111111111" || alpha.Branch != "" || alpha.Tag != "" {
+		t.Errorf("alpha after ApplyLock = %+v, want commit-only target", alpha)
+	}
+	beta := locked.Repos["beta"]
+	if beta.Commit != "2222222222222222222222222222222222222222" || beta.Tag != "" {
+		t.Errorf("beta after ApplyLock = %+v, want commit-only target", beta)
+	}
+	if beta.Path != "/tmp/beta" || beta.URL != "u" {
+		t.Errorf("beta after ApplyLock = %+v, want path and url preserved", beta)
+	}
+}
+
+func TestApplyLockMissingEntry(t *testing.T) {
+	config := repositories.Config{Repos: map[string]repositories.Repository{
+		"alpha": {Path: "/tmp/alpha", URL: "u", Branch: "main"},
+	}}
+	lock := repositories.LockConfig{Repos: map[string]repositories.LockedRepository{}}
+
+	_, err := repositories.ApplyLock(config, lock)
+	if err == nil {
+		t.Fatal("expected an error for a repository missing from the lock file, got nil")
+	}
+}
+
+func TestParseLockMissingFile(t *testing.T) {
+	testutil.Chdir(t, t.TempDir())
+
+	_, err := repositories.ParseLock()
+	if err == nil {
+		t.Fatal("expected an error when repositories.lock does not exist, got nil")
+	}
+}
