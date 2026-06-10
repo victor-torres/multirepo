@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
+	"slices"
 	"strings"
 
 	"multirepo/git"
@@ -86,13 +87,14 @@ func Status(config repositories.Config) error {
 			icon = color.RedString("✗")
 		}
 
-		// FIXME: this might return multiple tags and not just one
+		// Several tags may point at HEAD, one per line
 		currentTags, err := git.GetCurrentTags(repo)
+		currentTagList := strings.Split(currentTags, "\n")
 		currentBranch, err := git.GetCurrentBranch(repo)
 
 		var currentReference string
 		if currentTags != "" {
-			currentReference = fmt.Sprintf("tag: %s", currentTags)
+			currentReference = fmt.Sprintf("tag: %s", strings.Join(currentTagList, ", "))
 		} else if currentBranch != "" {
 			currentReference = fmt.Sprintf("branch: %s", currentBranch)
 		} else {
@@ -108,8 +110,8 @@ func Status(config repositories.Config) error {
 				icon = color.RedString("✗")
 			}
 		} else if target.Type == "tag" {
-			if target.Name == currentTags {
-				targetString = color.GreenString(fmt.Sprintf("(tag: %s)", currentTags))
+			if slices.Contains(currentTagList, target.Name) {
+				targetString = color.GreenString(fmt.Sprintf("(tag: %s)", target.Name))
 			} else {
 				targetString = color.RedString(fmt.Sprintf("(tag: %s ➜ %s)", target.Name, currentReference))
 				icon = color.RedString("✗")
