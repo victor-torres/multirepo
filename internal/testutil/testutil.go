@@ -67,7 +67,11 @@ func CreateOriginRepo(t *testing.T) string {
 func CloneRepo(t *testing.T, src string) string {
 	t.Helper()
 	dest := filepath.Join(t.TempDir(), "clone")
-	cmd := exec.Command("git", "clone", src, dest)
+	// autocrlf must be off *before* the initial checkout: Git for
+	// Windows defaults to true, which writes CRLF to the working tree,
+	// and flipping the setting afterwards makes every file look
+	// modified against the LF blobs in the index.
+	cmd := exec.Command("git", "clone", "-c", "core.autocrlf=false", src, dest)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git clone %s failed: %v\n%s", src, err, out)
