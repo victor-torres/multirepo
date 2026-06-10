@@ -404,6 +404,32 @@ func TestSyncForceDiscardsUncommittedChanges(t *testing.T) {
 	}
 }
 
+// Sync --force runs `git stash -u` followed by an unconditional `git
+// stash drop`. On a clean working tree the stash creates nothing, so the
+// drop deletes the user's most recent pre-existing stash entry instead.
+func TestSyncForcePreservesExistingStashOnCleanTree(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin) // on main
+	testutil.WriteFile(t, clone, "file.txt", "precious stashed work\n")
+	testutil.RunGit(t, clone, "stash") // working tree is clean again
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: clone, URL: origin, Branch: "main",
+	})
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Sync(config, true, false)
+	})
+	if err != nil {
+		t.Fatalf("Sync --force returned error: %v\n%s", err, output)
+	}
+
+	stashList := testutil.RunGit(t, clone, "stash", "list")
+	if stashList == "" {
+		t.Error("sync --force on a clean working tree dropped a pre-existing stash entry")
+	}
+}
+
 // --- Run ---
 
 func TestRunSingleRepository(t *testing.T) {
