@@ -27,23 +27,26 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 			}
 		}
 
-		if force {
-			err := git.Stash(repo)
-			if err != nil {
-				return err
-			}
-			_ = git.StashDrop(repo)
-		} else {
-			isDirty, err := git.IsDirty(repo)
-			if err != nil {
-				return err
-			}
-			if isDirty {
+		isDirty, err := git.IsDirty(repo)
+		if err != nil {
+			return err
+		}
+		if isDirty {
+			if !force {
 				return fmt.Errorf("repository '%s' has uncommitted changes, aborting (use --force to discard them)", repoName)
+			}
+			// Only stash and drop when there is something to stash:
+			// on a clean tree the stash creates no entry and the drop
+			// would delete a pre-existing stash instead.
+			if err := git.Stash(repo); err != nil {
+				return err
+			}
+			if err := git.StashDrop(repo); err != nil {
+				return err
 			}
 		}
 
-		err := git.Checkout(repo, recurse)
+		err = git.Checkout(repo, recurse)
 		if err != nil {
 			return err
 		}
