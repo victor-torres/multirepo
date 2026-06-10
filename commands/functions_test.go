@@ -477,6 +477,34 @@ func TestRunAllRepositories(t *testing.T) {
 	}
 }
 
+// Run with --all returned on the first command failure, silently
+// skipping the remaining repositories. It should run the command
+// everywhere and report the failures at the end.
+func TestRunAllContinuesAfterFailure(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	cloneA := testutil.CloneRepo(t, origin)
+	cloneB := testutil.CloneRepo(t, origin)
+	config := repositories.Config{Repos: map[string]repositories.Repository{
+		"alpha": {Path: cloneA, URL: origin, Branch: "main"},
+		"beta":  {Path: cloneB, URL: origin, Branch: "main"},
+	}}
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Run(config, "--all", "git", []string{"not-a-real-subcommand"})
+	})
+
+	if count := strings.Count(output, "➜ "); count != 2 {
+		t.Errorf("expected the failing command to be attempted in 2 repositories, found %d command echoes:\n%s", count, output)
+	}
+	if err == nil {
+		t.Fatal("expected an error when the command fails, got nil")
+	}
+	if !strings.Contains(err.Error(), "alpha") || !strings.Contains(err.Error(), "beta") {
+		t.Errorf("error = %q, want it to name the failing repositories alpha and beta", err)
+	}
+}
+
 func TestRunUnknownRepository(t *testing.T) {
 	origin := testutil.CreateOriginRepo(t)
 	clone := testutil.CloneRepo(t, origin)
