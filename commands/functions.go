@@ -89,6 +89,9 @@ func Status(config repositories.Config) error {
 
 		var dirtyString string
 		isDirty, err := git.IsDirty(repo)
+		if err != nil {
+			return fmt.Errorf("failed to check status of repository '%s': %w", repoName, err)
+		}
 		if isDirty {
 			dirtyString = color.RedString("(uncommitted changes)")
 			icon = color.RedString("✗")
@@ -96,8 +99,14 @@ func Status(config repositories.Config) error {
 
 		// Several tags may point at HEAD, one per line
 		currentTags, err := git.GetCurrentTags(repo)
+		if err != nil {
+			return fmt.Errorf("failed to list tags of repository '%s': %w", repoName, err)
+		}
 		currentTagList := strings.Split(currentTags, "\n")
 		currentBranch, err := git.GetCurrentBranch(repo)
+		if err != nil {
+			return fmt.Errorf("failed to get current branch of repository '%s': %w", repoName, err)
+		}
 
 		var currentReference string
 		if currentTags != "" {

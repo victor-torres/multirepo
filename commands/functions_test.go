@@ -202,6 +202,32 @@ func TestStatusMultipleTagsOnTargetCommit(t *testing.T) {
 	}
 }
 
+// Status checks GetCurrentCommit's error but silently discards the
+// errors from IsDirty, GetCurrentTags, and GetCurrentBranch, printing a
+// row computed from garbage instead of failing. A bare repository is a
+// deterministic reproduction: `git log` succeeds there but `git status`
+// fails.
+func TestStatusReturnsErrorWhenGitStatusFails(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	bare := filepath.Join(t.TempDir(), "bare.git")
+	cmd := exec.Command("git", "clone", "--bare", origin, bare)
+	if out, cloneErr := cmd.CombinedOutput(); cloneErr != nil {
+		t.Fatalf("git clone --bare failed: %v\n%s", cloneErr, out)
+	}
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: bare, URL: origin, Branch: "main",
+	})
+
+	var err error
+	testutil.CaptureStdout(t, func() {
+		err = commands.Status(config)
+	})
+
+	if err == nil {
+		t.Error("Status = nil for a repository where `git status` fails (bare repository); the IsDirty error was silently discarded")
+	}
+}
+
 // --- Sync ---
 
 func TestSyncClonesMissingRepository(t *testing.T) {
