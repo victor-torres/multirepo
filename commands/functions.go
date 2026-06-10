@@ -141,6 +141,7 @@ func Run(config repositories.Config, repository string, command string, args []s
 	PrintRepositoryCounter(config)
 	orderedRepoNames := GetOrderedRepoNames(config)
 	var success bool
+	var failed []string
 	for _, repoName := range orderedRepoNames {
 		if repository != "--all" && repoName != repository {
 			continue
@@ -164,11 +165,16 @@ func Run(config repositories.Config, repository string, command string, args []s
 		out, err := cmd.CombinedOutput()
 		fmt.Println(string(out))
 		if err != nil {
-			return err
+			// Keep running in the remaining repositories and report
+			// every failure at the end.
+			failed = append(failed, fmt.Sprintf("%s (%v)", repoName, err))
 		}
 	}
 	if !success {
 		return errors.New(fmt.Sprintf("Unknown repository '%s'", repository))
+	}
+	if len(failed) > 0 {
+		return fmt.Errorf("command failed in: %s", strings.Join(failed, ", "))
 	}
 	return nil
 }
