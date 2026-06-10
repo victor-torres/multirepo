@@ -33,6 +33,14 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 				return err
 			}
 			_ = git.StashDrop(repo)
+		} else {
+			isDirty, err := git.IsDirty(repo)
+			if err != nil {
+				return err
+			}
+			if isDirty {
+				return fmt.Errorf("repository '%s' has uncommitted changes, aborting (use --force to discard them)", repoName)
+			}
 		}
 
 		err := git.Checkout(repo, recurse)
