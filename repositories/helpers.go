@@ -27,7 +27,9 @@ func ResolvePath(path string) (string, error) {
 		return path, err
 	}
 
-	if strings.HasPrefix(path, "~/") {
+	if path == "~" {
+		path = homeDir
+	} else if strings.HasPrefix(path, "~/") {
 		path = filepath.Join(homeDir, path[2:])
 	}
 
