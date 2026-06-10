@@ -1,6 +1,7 @@
 package commands_test
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,7 +30,7 @@ func TestStatusCleanTag(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -55,7 +56,7 @@ func TestStatusCleanBranch(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -76,7 +77,7 @@ func TestStatusCleanCommit(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -96,7 +97,7 @@ func TestStatusWrongBranch(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -120,7 +121,7 @@ func TestStatusUncommittedChanges(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -143,7 +144,7 @@ func TestStatusRepositoryNotFound(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -168,7 +169,7 @@ func TestStatusShortCommitHashDoesNotPanic(t *testing.T) {
 	var panicked interface{}
 	testutil.CaptureStdout(t, func() {
 		defer func() { panicked = recover() }()
-		_ = commands.Status(config)
+		_ = commands.Status(config, "")
 	})
 
 	if panicked != nil {
@@ -191,7 +192,7 @@ func TestStatusMultipleTagsOnTargetCommit(t *testing.T) {
 
 	var err error
 	output := testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 	if err != nil {
 		t.Fatalf("Status returned error: %v", err)
@@ -220,7 +221,7 @@ func TestStatusReturnsErrorWhenGitStatusFails(t *testing.T) {
 
 	var err error
 	testutil.CaptureStdout(t, func() {
-		err = commands.Status(config)
+		err = commands.Status(config, "")
 	})
 
 	if err == nil {
@@ -656,5 +657,92 @@ func TestLockFailsWhenRepositoryMissing(t *testing.T) {
 	}
 	if _, statErr := os.Stat("repositories.lock"); !os.IsNotExist(statErr) {
 		t.Error("repositories.lock should not be written when locking fails")
+	}
+}
+
+// --- Status output formats ---
+
+func TestStatusJSONOutput(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin)
+	testutil.RunGit(t, clone, "checkout", "v1.0.0")
+	config := repositories.Config{Repos: map[string]repositories.Repository{
+		"myrepo": {Path: clone, URL: origin, Tag: "v1.0.0"},
+		"ghost":  {Path: filepath.Join(t.TempDir(), "missing"), URL: origin, Tag: "v1.0.0"},
+	}}
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Status(config, "json")
+	})
+	if err != nil {
+		t.Fatalf("Status json returned error: %v", err)
+	}
+
+	var rows []commands.StatusRow
+	if jsonErr := json.Unmarshal([]byte(output), &rows); jsonErr != nil {
+		t.Fatalf("status --json did not produce valid JSON: %v\noutput:\n%s", jsonErr, output)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("got %d rows, want 2", len(rows))
+	}
+
+	// Rows are ordered by repository name: ghost, myrepo.
+	ghost, myrepo := rows[0], rows[1]
+	if ghost.Name != "ghost" || ghost.Found {
+		t.Errorf("ghost row = %+v, want found=false", ghost)
+	}
+	want := testutil.RunGit(t, clone, "rev-parse", "HEAD")
+	if myrepo.Name != "myrepo" || !myrepo.Found || myrepo.Commit != want {
+		t.Errorf("myrepo row = %+v, want found row at commit %s", myrepo, want)
+	}
+	if !myrepo.InSync || myrepo.Dirty {
+		t.Errorf("myrepo row = %+v, want in_sync=true dirty=false", myrepo)
+	}
+	if myrepo.TargetType != "tag" || myrepo.TargetName != "v1.0.0" {
+		t.Errorf("myrepo target = %s %s, want tag v1.0.0", myrepo.TargetType, myrepo.TargetName)
+	}
+}
+
+func TestStatusMarkdownOutput(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin)
+	testutil.WriteFile(t, clone, "file.txt", "dirty content\n")
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: clone, URL: origin, Branch: "main",
+	})
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Status(config, "md")
+	})
+	if err != nil {
+		t.Fatalf("Status md returned error: %v", err)
+	}
+
+	if !strings.Contains(output, "| repository |") {
+		t.Errorf("expected a markdown table header, got:\n%s", output)
+	}
+	if !strings.Contains(output, "| myrepo ") {
+		t.Errorf("expected a row for myrepo, got:\n%s", output)
+	}
+	if strings.Contains(output, "\x1b[") {
+		t.Errorf("markdown output must not contain ANSI color codes, got:\n%s", output)
+	}
+}
+
+func TestStatusUnknownFormat(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin)
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: clone, URL: origin, Branch: "main",
+	})
+
+	var err error
+	testutil.CaptureStdout(t, func() {
+		err = commands.Status(config, "xml")
+	})
+	if err == nil {
+		t.Error("expected an error for an unknown status format, got nil")
 	}
 }

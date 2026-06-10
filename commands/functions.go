@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -85,97 +86,181 @@ func Sync(config repositories.Config, force bool, recurse bool) error {
 		fmt.Println()
 	}
 
-	return Status(config)
+	return Status(config, "")
 }
 
-func Status(config repositories.Config) error {
-	PrintRepositoryCounter(config)
-
-	maxRepoNameLength := 0
-	for repoName := range config.Repos {
-		if len(repoName) > maxRepoNameLength {
-			maxRepoNameLength = len(repoName)
-		}
-	}
-
-	orderedRepoNames := GetOrderedRepoNames(config)
-	for _, repoName := range orderedRepoNames {
+// collectStatus gathers the state of every configured repository in
+// name order, without printing anything.
+func collectStatus(config repositories.Config) ([]StatusRow, error) {
+	var rows []StatusRow
+	for _, repoName := range GetOrderedRepoNames(config) {
 		repo := config.Repos[repoName]
 
-		tabBuilder := &strings.Builder{}
-		for i := 0; i < (maxRepoNameLength + 4 - len(repoName)); i++ {
-			tabBuilder.WriteString(" ")
-		}
-		tabString := tabBuilder.String()
-
-		commitHash, err := git.GetCurrentCommit(repo)
+		repoPath, err := repositories.ResolvePath(repo.Path)
 		if err != nil {
-			fmt.Printf("%s%s%s\n", repoName, tabString, color.RedString("✗ repository not found"))
-			continue
+			return nil, err
 		}
 
 		target, err := repositories.ParseTarget(repo)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		icon := color.GreenString("✔")
+		row := StatusRow{
+			Name:       repoName,
+			Path:       repoPath,
+			TargetType: target.Type,
+			TargetName: target.Name,
+		}
 
-		var dirtyString string
-		isDirty, err := git.IsDirty(repo)
+		commitHash, err := git.GetCurrentCommit(repo)
 		if err != nil {
-			return fmt.Errorf("failed to check status of repository '%s': %w", repoName, err)
+			rows = append(rows, row) // Found stays false
+			continue
 		}
-		if isDirty {
-			dirtyString = color.RedString("(uncommitted changes)")
-			icon = color.RedString("✗")
+		row.Found = true
+		row.Commit = commitHash
+
+		row.Dirty, err = git.IsDirty(repo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check status of repository '%s': %w", repoName, err)
 		}
 
 		// Several tags may point at HEAD, one per line
 		currentTags, err := git.GetCurrentTags(repo)
 		if err != nil {
-			return fmt.Errorf("failed to list tags of repository '%s': %w", repoName, err)
+			return nil, fmt.Errorf("failed to list tags of repository '%s': %w", repoName, err)
 		}
-		currentTagList := strings.Split(currentTags, "\n")
-		currentBranch, err := git.GetCurrentBranch(repo)
-		if err != nil {
-			return fmt.Errorf("failed to get current branch of repository '%s': %w", repoName, err)
+		if currentTags != "" {
+			row.Tags = strings.Split(currentTags, "\n")
 		}
 
-		var currentReference string
-		if currentTags != "" {
-			currentReference = fmt.Sprintf("tag: %s", strings.Join(currentTagList, ", "))
-		} else if currentBranch != "" {
-			currentReference = fmt.Sprintf("branch: %s", currentBranch)
-		} else {
-			currentReference = commitHash[:7]
+		row.Branch, err = git.GetCurrentBranch(repo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get current branch of repository '%s': %w", repoName, err)
+		}
+
+		switch target.Type {
+		case "commit":
+			// Abbreviated commit hashes are prefixes of the full hash,
+			// so prefix matching supports any abbreviation length.
+			row.RefMatches = strings.HasPrefix(commitHash, target.Name)
+		case "tag":
+			row.RefMatches = slices.Contains(row.Tags, target.Name)
+		case "branch":
+			row.RefMatches = target.Name == row.Branch
+		}
+		row.InSync = row.RefMatches && !row.Dirty
+
+		rows = append(rows, row)
+	}
+	return rows, nil
+}
+
+// currentReference describes what HEAD currently points at, preferring
+// tags, then the branch, then an abbreviated commit hash.
+func currentReference(row StatusRow) string {
+	if len(row.Tags) > 0 {
+		return fmt.Sprintf("tag: %s", strings.Join(row.Tags, ", "))
+	}
+	if row.Branch != "" {
+		return fmt.Sprintf("branch: %s", row.Branch)
+	}
+	return row.Commit[:7]
+}
+
+func renderStatusHuman(rows []StatusRow) {
+	maxRepoNameLength := 0
+	for _, row := range rows {
+		if len(row.Name) > maxRepoNameLength {
+			maxRepoNameLength = len(row.Name)
+		}
+	}
+
+	for _, row := range rows {
+		tabString := strings.Repeat(" ", maxRepoNameLength+4-len(row.Name))
+
+		if !row.Found {
+			fmt.Printf("%s%s%s\n", row.Name, tabString, color.RedString("✗ repository not found"))
+			continue
+		}
+
+		icon := color.GreenString("✔")
+
+		var dirtyString string
+		if row.Dirty {
+			dirtyString = color.RedString("(uncommitted changes)")
+			icon = color.RedString("✗")
 		}
 
 		var targetString string
-		if target.Type == "commit" {
-			// Abbreviated commit hashes are prefixes of the full hash,
-			// so prefix matching supports any abbreviation length.
-			if !strings.HasPrefix(commitHash, target.Name) {
-				targetString = color.RedString(fmt.Sprintf("(%s ➜ %s)", target.Name, commitHash))
-				icon = color.RedString("✗")
+		if row.RefMatches {
+			if row.TargetType == "tag" || row.TargetType == "branch" {
+				targetString = color.GreenString(fmt.Sprintf("(%s: %s)", row.TargetType, row.TargetName))
 			}
-		} else if target.Type == "tag" {
-			if slices.Contains(currentTagList, target.Name) {
-				targetString = color.GreenString(fmt.Sprintf("(tag: %s)", target.Name))
+		} else {
+			icon = color.RedString("✗")
+			if row.TargetType == "commit" {
+				targetString = color.RedString(fmt.Sprintf("(%s ➜ %s)", row.TargetName, row.Commit))
 			} else {
-				targetString = color.RedString(fmt.Sprintf("(tag: %s ➜ %s)", target.Name, currentReference))
-				icon = color.RedString("✗")
-			}
-		} else if target.Type == "branch" {
-			if target.Name == currentBranch {
-				targetString = color.GreenString(fmt.Sprintf("(branch: %s)", currentBranch))
-			} else {
-				targetString = color.RedString(fmt.Sprintf("(branch: %s ➜ %s)", target.Name, currentReference))
-				icon = color.RedString("✗")
+				targetString = color.RedString(fmt.Sprintf("(%s: %s ➜ %s)", row.TargetType, row.TargetName, currentReference(row)))
 			}
 		}
 
-		fmt.Printf("%s%s%s %s %s %s\n", repoName, tabString, icon, commitHash, targetString, dirtyString)
+		fmt.Printf("%s%s%s %s %s %s\n", row.Name, tabString, icon, row.Commit, targetString, dirtyString)
+	}
+}
+
+func renderStatusJSON(rows []StatusRow) error {
+	encoded, err := json.MarshalIndent(rows, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(encoded))
+	return nil
+}
+
+func renderStatusMarkdown(rows []StatusRow) {
+	fmt.Println("| repository | ok | commit | target | current | dirty |")
+	fmt.Println("| --- | --- | --- | --- | --- | --- |")
+	for _, row := range rows {
+		if !row.Found {
+			fmt.Printf("| %s | ✗ | not found | %s: %s | | |\n", row.Name, row.TargetType, row.TargetName)
+			continue
+		}
+		icon := "✔"
+		if !row.InSync {
+			icon = "✗"
+		}
+		dirty := ""
+		if row.Dirty {
+			dirty = "uncommitted changes"
+		}
+		fmt.Printf("| %s | %s | %s | %s: %s | %s | %s |\n",
+			row.Name, icon, row.Commit, row.TargetType, row.TargetName, currentReference(row), dirty)
+	}
+}
+
+// Status reports the state of every repository. Supported formats are
+// "" (human-readable, colored), "json", and "md" (markdown table).
+func Status(config repositories.Config, format string) error {
+	if format != "" && format != "json" && format != "md" {
+		return fmt.Errorf("unknown status format '%s' (supported: json, md)", format)
+	}
+
+	rows, err := collectStatus(config)
+	if err != nil {
+		return err
+	}
+
+	switch format {
+	case "json":
+		return renderStatusJSON(rows)
+	case "md":
+		renderStatusMarkdown(rows)
+	default:
+		PrintRepositoryCounter(config)
+		renderStatusHuman(rows)
 	}
 	return nil
 }
