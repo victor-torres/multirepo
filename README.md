@@ -145,6 +145,21 @@ pydantic    ✗ 7061f36bc721ef4f173ef8f2e098f25e1eaea705 (uncommitted changes)
 pytest      ✗ 940b78232e48c34501cfe6e0bfd0ea6d64f4521b (branch: main ➜ 940b782) 
 ```
 
+### Machine-readable status
+
+For scripting, CI gates, or feeding an AI agent, status can emit JSON or
+a markdown table instead of the colored human output:
+
+```shell
+multirepo status --json
+multirepo status --md
+```
+
+The JSON output is an array with one object per repository, including
+`name`, `path`, `found`, `commit`, `branch`, `tags`, `dirty`,
+`target_type`, `target_name`, `ref_matches`, and `in_sync` (true when
+the repository is on the configured reference with a clean tree).
+
 If you're just on the wrong reference, you can simply run the sync command again.
 Sync automatically fetches from the remote when the configured reference
 is not available locally, and fast-forwards branch targets to their

@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -209,5 +210,31 @@ repositories:
 	}
 	if _, err := os.Stat(filepath.Join(repoPath, "file.txt")); err != nil {
 		t.Fatalf("repository was not cloned at the .env-resolved path: %v", err)
+	}
+}
+
+func TestStatusJSONEndToEnd(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin)
+	workDir := t.TempDir()
+	writeConfig(t, workDir, fmt.Sprintf(`
+repositories:
+  myrepo:
+    path: %s
+    url: %s
+    branch: main
+`, clone, origin))
+
+	output, exitCode := runBinary(t, workDir, "status", "--json")
+	if exitCode != 0 {
+		t.Fatalf("status --json exit code = %d, want 0\n%s", exitCode, output)
+	}
+
+	var rows []map[string]any
+	if err := json.Unmarshal([]byte(output), &rows); err != nil {
+		t.Fatalf("status --json output is not valid JSON: %v\noutput:\n%s", err, output)
+	}
+	if len(rows) != 1 || rows[0]["name"] != "myrepo" {
+		t.Errorf("unexpected JSON rows: %v", rows)
 	}
 }

@@ -18,7 +18,8 @@ import (
 func loadConfig() repositories.Config {
 	err := godotenv.Load(".env")
 	if err == nil {
-		fmt.Printf("Loading environment variables from .env file\n")
+		// Stderr so machine-readable output (status --json) stays clean.
+		fmt.Fprintf(os.Stderr, "Loading environment variables from .env file\n")
 	}
 
 	config, err := repositories.ParseConfig()
@@ -38,8 +39,22 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-	} else if len(os.Args) == 2 && os.Args[1] == "status" {
-		err := commands.Status(loadConfig())
+	} else if len(os.Args) >= 2 && os.Args[1] == "status" {
+		jsonFlag := slices.Contains(os.Args, "--json")
+		mdFlag := slices.Contains(os.Args, "--md")
+		if jsonFlag && mdFlag {
+			fmt.Println("status: --json and --md are mutually exclusive")
+			os.Exit(1)
+		}
+
+		var format string
+		if jsonFlag {
+			format = "json"
+		} else if mdFlag {
+			format = "md"
+		}
+
+		err := commands.Status(loadConfig(), format)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -57,7 +72,7 @@ func main() {
 		fmt.Println("These are common commands used in various situations:")
 		fmt.Println()
 		fmt.Println("multirepo sync\t\t\t\t\t\t\tClone repositories and checkout the specified reference.")
-		fmt.Println("multirepo status\t\t\t\t\t\tDisplay status for each one of the repositories.")
+		fmt.Println("multirepo status [--json | --md]\t\t\t\tDisplay status for each one of the repositories.")
 		fmt.Println("multirepo run <repository name | --all> <command> [<args>]\tRun an arbitrary command inside one or all repositories.")
 		os.Exit(1)
 	}
