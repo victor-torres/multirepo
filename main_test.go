@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -23,7 +24,11 @@ func TestMain(m *testing.M) {
 	}
 	defer os.RemoveAll(dir)
 
-	binPath = filepath.Join(dir, "multirepo")
+	binName := "multirepo"
+	if runtime.GOOS == "windows" {
+		binName += ".exe"
+	}
+	binPath = filepath.Join(dir, binName)
 	cmd := exec.Command("go", "build", "-o", binPath, ".")
 	out, err := cmd.CombinedOutput()
 	if err != nil {

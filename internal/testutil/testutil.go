@@ -33,6 +33,9 @@ func configureIdentity(t *testing.T, dir string) {
 	RunGit(t, dir, "config", "user.name", "Test User")
 	RunGit(t, dir, "config", "commit.gpgsign", "false")
 	RunGit(t, dir, "config", "tag.gpgsign", "false")
+	// Git for Windows defaults to core.autocrlf=true, which rewrites line
+	// endings on checkout and can make freshly cloned fixtures look dirty.
+	RunGit(t, dir, "config", "core.autocrlf", "false")
 }
 
 // CreateOriginRepo creates a git repository in a temp directory with:
