@@ -211,3 +211,27 @@ repositories:
 		t.Fatalf("repository was not cloned at the .env-resolved path: %v", err)
 	}
 }
+
+func TestVersionFlag(t *testing.T) {
+	for _, arg := range []string{"--version", "-v", "version"} {
+		output, exitCode := runBinary(t, t.TempDir(), arg)
+		if exitCode != 0 {
+			t.Errorf("%q exit code = %d, want 0\n%s", arg, exitCode, output)
+		}
+		if !strings.Contains(output, "multirepo version") {
+			t.Errorf("%q output = %q, want it to contain 'multirepo version'", arg, output)
+		}
+	}
+}
+
+func TestHelpFlag(t *testing.T) {
+	for _, arg := range []string{"--help", "-h", "help"} {
+		output, exitCode := runBinary(t, t.TempDir(), arg)
+		if exitCode != 0 {
+			t.Errorf("%q exit code = %d, want 0 (asking for help is not an error)\n%s", arg, exitCode, output)
+		}
+		if !strings.Contains(output, "usage: multirepo <command>") {
+			t.Errorf("%q output should contain usage text, got:\n%s", arg, output)
+		}
+	}
+}
