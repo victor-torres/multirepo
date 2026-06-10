@@ -3,6 +3,7 @@ package git
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"multirepo/repositories"
@@ -14,13 +15,33 @@ func Exists(repo repositories.Repository) bool {
 		return false
 	}
 
+	// Git walks up parent directories looking for a work tree, so simply
+	// running a git command in the path also succeeds for any directory
+	// nested inside some other repository. Require the work tree root to
+	// be the configured path itself.
 	cmd := exec.Command("git")
 	cmd.Args = append(cmd.Args, "-C")
 	cmd.Args = append(cmd.Args, repoPath)
-	cmd.Args = append(cmd.Args, "status")
+	cmd.Args = append(cmd.Args, "rev-parse")
+	cmd.Args = append(cmd.Args, "--show-toplevel")
 
-	_, err = cmd.CombinedOutput()
-	return err == nil
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+	toplevel := strings.TrimSpace(string(out))
+
+	// Compare through EvalSymlinks: git reports the physical path, while
+	// the configured path may contain symlinks (e.g. /tmp on macOS).
+	resolvedToplevel, err := filepath.EvalSymlinks(toplevel)
+	if err != nil {
+		return false
+	}
+	resolvedRepoPath, err := filepath.EvalSymlinks(repoPath)
+	if err != nil {
+		return false
+	}
+	return resolvedToplevel == resolvedRepoPath
 }
 
 func IsDirty(repo repositories.Repository) (bool, error) {

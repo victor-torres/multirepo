@@ -40,6 +40,22 @@ func TestExistsFalseForMissingDirectory(t *testing.T) {
 	}
 }
 
+// Exists ran `git status` in the configured path, which succeeds for any
+// directory located *inside* some other git repository (git walks up to
+// find the enclosing work tree). Sync would then skip the clone and
+// happily checkout refs in the enclosing repository.
+func TestExistsFalseForDirectoryInsideAnotherRepository(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	nested := filepath.Join(origin, "vendor", "dependency")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	if git.Exists(repoAt(nested)) {
+		t.Errorf("Exists = true for a plain directory nested inside another git repository: %s", nested)
+	}
+}
+
 func TestIsDirtyCleanRepository(t *testing.T) {
 	origin := testutil.CreateOriginRepo(t)
 
