@@ -310,3 +310,30 @@ repositories:
 		t.Errorf("unexpected JSON rows: %v", rows)
 	}
 }
+
+func TestSyncJobsFlagEndToEnd(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	workDir := t.TempDir()
+	base := t.TempDir()
+	writeConfig(t, workDir, fmt.Sprintf(`
+repositories:
+  alpha:
+    path: %[1]s/alpha
+    url: %[2]s
+    tag: v1.0.0
+  beta:
+    path: %[1]s/beta
+    url: %[2]s
+    tag: v1.0.0
+`, base, origin))
+
+	output, exitCode := runBinary(t, workDir, "sync", "--jobs", "2")
+	if exitCode != 0 {
+		t.Fatalf("sync --jobs 2 exit code = %d, want 0\n%s", exitCode, output)
+	}
+	for _, name := range []string{"alpha", "beta"} {
+		if _, err := os.Stat(filepath.Join(base, name, "file.txt")); err != nil {
+			t.Errorf("repository %s was not synced: %v", name, err)
+		}
+	}
+}

@@ -106,6 +106,12 @@ You can also optionally specify these flags:
 
 - `--force` or `-f` to discard uncommited changes permanently
 - `--recurse` or `-r` to recursively checkout submodules
+- `--jobs N` or `-j N` to limit how many repositories are processed
+  concurrently (default: 10)
+
+Repositories are synced in parallel, but their output blocks and the
+final status table are always printed in repository name order. The
+same `--jobs` flag works with `multirepo status`.
 
 ### Shallow clones
 
