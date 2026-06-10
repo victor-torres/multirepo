@@ -154,3 +154,31 @@ func TestParseTargetMissingReference(t *testing.T) {
 		t.Error("expected an error when no commit, tag, or branch is set, got nil")
 	}
 }
+
+func TestParseConfigDepth(t *testing.T) {
+	dir := t.TempDir()
+	testutil.WriteFile(t, dir, "repositories.yaml", `
+repositories:
+  shallow:
+    path: /tmp/shallow
+    url: https://example.com/shallow.git
+    branch: main
+    depth: 1
+  full:
+    path: /tmp/full
+    url: https://example.com/full.git
+    branch: main
+`)
+	testutil.Chdir(t, dir)
+
+	config, err := repositories.ParseConfig()
+	if err != nil {
+		t.Fatalf("ParseConfig returned error: %v", err)
+	}
+	if got := config.Repos["shallow"].Depth; got != 1 {
+		t.Errorf("Depth = %d for repository with depth: 1, want 1", got)
+	}
+	if got := config.Repos["full"].Depth; got != 0 {
+		t.Errorf("Depth = %d for repository without depth, want 0 (full clone)", got)
+	}
+}

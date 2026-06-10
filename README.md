@@ -107,6 +107,24 @@ You can also optionally specify these flags:
 - `--force` or `-f` to discard uncommited changes permanently
 - `--recurse` or `-r` to recursively checkout submodules
 
+### Shallow clones
+
+For large dependencies you can limit how much history is cloned with the
+optional `depth` field (it maps to `git clone --depth`):
+
+```yaml
+repositories:
+  fastapi:
+    path: /tmp/multirepo/fastapi
+    url: https://github.com/tiangolo/fastapi.git
+    tag: 0.111.0
+    depth: 1
+```
+
+Omit `depth` (or set it to 0) for a full clone. If the configured
+reference is not included in the shallow history, sync automatically
+falls back to fetching it.
+
 ## Status
 
 For your convenience, we run a status command everytime you sync a `repositories.yaml` file.

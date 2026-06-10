@@ -243,6 +243,40 @@ func TestCloneRecurse(t *testing.T) {
 	}
 }
 
+func TestCloneWithDepth(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t) // main has two commits
+	dest := filepath.Join(t.TempDir(), "clone")
+	repo := repositories.Repository{Path: dest, URL: testutil.FileURL(origin), Depth: 1}
+
+	testutil.CaptureStdout(t, func() {
+		if err := git.Clone(repo, false); err != nil {
+			t.Fatalf("Clone with depth returned error: %v", err)
+		}
+	})
+
+	count := testutil.RunGit(t, dest, "rev-list", "--count", "HEAD")
+	if count != "1" {
+		t.Errorf("rev-list --count HEAD = %s after a depth-1 clone, want 1", count)
+	}
+}
+
+func TestCloneWithoutDepthIsFull(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t) // main has two commits
+	dest := filepath.Join(t.TempDir(), "clone")
+	repo := repositories.Repository{Path: dest, URL: testutil.FileURL(origin)}
+
+	testutil.CaptureStdout(t, func() {
+		if err := git.Clone(repo, false); err != nil {
+			t.Fatalf("Clone returned error: %v", err)
+		}
+	})
+
+	count := testutil.RunGit(t, dest, "rev-list", "--count", "HEAD")
+	if count != "2" {
+		t.Errorf("rev-list --count HEAD = %s after a default clone, want the full history (2)", count)
+	}
+}
+
 func TestCloneInvalidURL(t *testing.T) {
 	dest := filepath.Join(t.TempDir(), "clone")
 	repo := repositories.Repository{
