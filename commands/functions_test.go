@@ -293,6 +293,84 @@ func TestSyncAbortsOnDirtyRepository(t *testing.T) {
 	}
 }
 
+// Sync never fetched, so a tag (or commit) created in origin after the
+// initial clone could not be checked out: sync failed and the README
+// told users to fetch by hand.
+func TestSyncFetchesNewTagFromOrigin(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin) // on main
+	testutil.WriteFile(t, origin, "file.txt", "third version\n")
+	testutil.RunGit(t, origin, "add", ".")
+	testutil.RunGit(t, origin, "commit", "-m", "third commit")
+	testutil.RunGit(t, origin, "tag", "v2.0.0")
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: clone, URL: origin, Tag: "v2.0.0",
+	})
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Sync(config, false, false)
+	})
+	if err != nil {
+		t.Fatalf("Sync returned error for a tag that exists in origin but not locally: %v\n%s", err, output)
+	}
+
+	want := testutil.RunGit(t, origin, "rev-parse", "v2.0.0^{commit}")
+	got := testutil.RunGit(t, clone, "rev-parse", "HEAD")
+	if got != want {
+		t.Errorf("HEAD after sync = %s, want tag commit %s", got, want)
+	}
+}
+
+// A repository pinned to a branch never advanced: sync checked out the
+// branch but never fetched, so the local branch stayed on whatever
+// commit it had at clone time.
+func TestSyncFastForwardsBranchToOrigin(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin) // on main
+	testutil.WriteFile(t, origin, "file.txt", "third version\n")
+	testutil.RunGit(t, origin, "add", ".")
+	testutil.RunGit(t, origin, "commit", "-m", "third commit")
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: clone, URL: origin, Branch: "main",
+	})
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Sync(config, false, false)
+	})
+	if err != nil {
+		t.Fatalf("Sync returned error: %v\n%s", err, output)
+	}
+
+	want := testutil.RunGit(t, origin, "rev-parse", "main")
+	got := testutil.RunGit(t, clone, "rev-parse", "HEAD")
+	if got != want {
+		t.Errorf("HEAD after sync = %s, want origin's main %s (branch was not fast-forwarded)", got, want)
+	}
+}
+
+// Guard for the design choice: tag and commit targets that are already
+// available locally must not require network access.
+func TestSyncTagTargetWorksWithoutRemote(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin) // on main, v1.0.0 fetched
+	if err := os.RemoveAll(origin); err != nil {
+		t.Fatal(err)
+	}
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: clone, URL: origin, Tag: "v1.0.0",
+	})
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Sync(config, false, false)
+	})
+	if err != nil {
+		t.Fatalf("Sync should not need the remote for a locally available tag: %v\n%s", err, output)
+	}
+}
+
 func TestSyncForceDiscardsUncommittedChanges(t *testing.T) {
 	origin := testutil.CreateOriginRepo(t)
 	clone := testutil.CloneRepo(t, origin) // on main, file.txt = "second version"
