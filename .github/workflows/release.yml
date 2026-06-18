@@ -30,3 +30,13 @@ jobs:
         ldflags: -X main.version=${{ github.ref_name }}
         goos: darwin
         goarch: arm64
+    - uses: wangyoucao577/go-release-action@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: windows
+        goarch: amd64
+    - uses: wangyoucao577/go-release-action@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: windows
+        goarch: arm64

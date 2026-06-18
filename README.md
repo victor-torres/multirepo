@@ -5,7 +5,7 @@ An alternative to git submodules and monorepos written in Go
 ## Install
 
 You have two options to acquire the binary executable for this project:
-- download pre-compiled releases from Github ([click here](https://github.com/victor-torres/multirepo/releases/latest))
+- download pre-compiled releases from Github for Linux, macOS, or Windows ([click here](https://github.com/victor-torres/multirepo/releases/latest))
 - clone this repository and compile the project locally using go
 
 Once you have the executable binary on your machine,
