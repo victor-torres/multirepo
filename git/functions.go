@@ -193,6 +193,11 @@ func Clone(repo repositories.Repository, recurse bool) error {
 	cmd.Args = append(cmd.Args, repo.URL)
 	cmd.Args = append(cmd.Args, repoPath)
 
+	if repo.Depth > 0 {
+		cmd.Args = append(cmd.Args, "--depth")
+		cmd.Args = append(cmd.Args, fmt.Sprintf("%d", repo.Depth))
+	}
+
 	if recurse {
 		cmd.Args = append(cmd.Args, "--recurse-submodules")
 		cmd.Args = append(cmd.Args, "-j8")

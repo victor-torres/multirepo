@@ -33,6 +33,9 @@ func configureIdentity(t *testing.T, dir string) {
 	RunGit(t, dir, "config", "user.name", "Test User")
 	RunGit(t, dir, "config", "commit.gpgsign", "false")
 	RunGit(t, dir, "config", "tag.gpgsign", "false")
+	// Git for Windows defaults to core.autocrlf=true, which rewrites line
+	// endings on checkout and can make freshly cloned fixtures look dirty.
+	RunGit(t, dir, "config", "core.autocrlf", "false")
 }
 
 // CreateOriginRepo creates a git repository in a temp directory with:
@@ -60,11 +63,26 @@ func CreateOriginRepo(t *testing.T) string {
 	return dir
 }
 
+// FileURL converts a local directory path to a file:// URL. Git silently
+// ignores --depth for plain local-path clones; the file:// transport
+// honors it.
+func FileURL(path string) string {
+	p := filepath.ToSlash(path)
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	return "file://" + p
+}
+
 // CloneRepo clones src into a new temp directory and returns the clone path.
 func CloneRepo(t *testing.T, src string) string {
 	t.Helper()
 	dest := filepath.Join(t.TempDir(), "clone")
-	cmd := exec.Command("git", "clone", src, dest)
+	// autocrlf must be off *before* the initial checkout: Git for
+	// Windows defaults to true, which writes CRLF to the working tree,
+	// and flipping the setting afterwards makes every file look
+	// modified against the LF blobs in the index.
+	cmd := exec.Command("git", "clone", "-c", "core.autocrlf=false", src, dest)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("git clone %s failed: %v\n%s", src, err, out)

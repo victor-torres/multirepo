@@ -319,6 +319,30 @@ func TestSyncAbortsOnDirtyRepository(t *testing.T) {
 	}
 }
 
+// A shallow clone only fetches the default branch tip, so a tag target
+// that is not on that tip must trigger the fetch fallback after cloning.
+func TestSyncShallowCloneWithTagTarget(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t) // v1.0.0 is the first of two commits
+	dest := filepath.Join(t.TempDir(), "myrepo")
+	config := singleRepoConfig("myrepo", repositories.Repository{
+		Path: dest, URL: testutil.FileURL(origin), Tag: "v1.0.0", Depth: 1,
+	})
+
+	var err error
+	output := testutil.CaptureStdout(t, func() {
+		err = commands.Sync(config, false, false)
+	})
+	if err != nil {
+		t.Fatalf("Sync of a shallow clone with a tag target returned error: %v\n%s", err, output)
+	}
+
+	want := testutil.RunGit(t, origin, "rev-parse", "v1.0.0^{commit}")
+	got := testutil.RunGit(t, dest, "rev-parse", "HEAD")
+	if got != want {
+		t.Errorf("HEAD after shallow sync = %s, want tag commit %s", got, want)
+	}
+}
+
 // Sync never fetched, so a tag (or commit) created in origin after the
 // initial clone could not be checked out: sync failed and the README
 // told users to fetch by hand.
