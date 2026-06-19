@@ -142,10 +142,10 @@ func RefExists(repo repositories.Repository, ref string) bool {
 	return err == nil
 }
 
-func Fetch(repo repositories.Repository) error {
+func Fetch(repo repositories.Repository) (string, error) {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	cmd := exec.Command("git")
@@ -154,19 +154,18 @@ func Fetch(repo repositories.Repository) error {
 	cmd.Args = append(cmd.Args, "fetch")
 	cmd.Args = append(cmd.Args, "--tags")
 
-	fmt.Printf("➜ %s$ git fetch --tags\n", repoPath)
+	echo := fmt.Sprintf("➜ %s$ git fetch --tags\n", repoPath)
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
-	return err
+	return echo + string(out), err
 }
 
 // FastForward advances the checked-out branch to origin/<branch>. It is
 // a no-op when the branch is already up to date or ahead of origin, and
 // fails when the histories have diverged (never discards local commits).
-func FastForward(repo repositories.Repository, branch string) error {
+func FastForward(repo repositories.Repository, branch string) (string, error) {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	cmd := exec.Command("git")
@@ -176,16 +175,15 @@ func FastForward(repo repositories.Repository, branch string) error {
 	cmd.Args = append(cmd.Args, "--ff-only")
 	cmd.Args = append(cmd.Args, "origin/"+branch)
 
-	fmt.Printf("➜ %s$ git merge --ff-only origin/%s\n", repoPath, branch)
+	echo := fmt.Sprintf("➜ %s$ git merge --ff-only origin/%s\n", repoPath, branch)
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
-	return err
+	return echo + string(out), err
 }
 
-func Clone(repo repositories.Repository, recurse bool) error {
+func Clone(repo repositories.Repository, recurse bool) (string, error) {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	cmd := exec.Command("git")
@@ -203,16 +201,15 @@ func Clone(repo repositories.Repository, recurse bool) error {
 		cmd.Args = append(cmd.Args, "-j8")
 	}
 
-	fmt.Printf("➜ %s$ git clone %s %s\n", repoPath, repo.URL, strings.Join(cmd.Args[3:], " "))
+	echo := fmt.Sprintf("➜ %s$ git clone %s %s\n", repoPath, repo.URL, strings.Join(cmd.Args[3:], " "))
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
-	return err
+	return echo + string(out), err
 }
 
-func Stash(repo repositories.Repository) error {
+func Stash(repo repositories.Repository) (string, error) {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	cmd := exec.Command("git")
@@ -221,16 +218,15 @@ func Stash(repo repositories.Repository) error {
 	cmd.Args = append(cmd.Args, "stash")
 	cmd.Args = append(cmd.Args, "-u")
 
-	fmt.Printf("➜ %s$ git stash -u\n", repoPath)
+	echo := fmt.Sprintf("➜ %s$ git stash -u\n", repoPath)
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
-	return err
+	return echo + string(out), err
 }
 
-func StashDrop(repo repositories.Repository) error {
+func StashDrop(repo repositories.Repository) (string, error) {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	cmd := exec.Command("git")
@@ -239,16 +235,15 @@ func StashDrop(repo repositories.Repository) error {
 	cmd.Args = append(cmd.Args, "stash")
 	cmd.Args = append(cmd.Args, "drop")
 
-	fmt.Printf("➜ %s$ git stash drop\n", repoPath)
+	echo := fmt.Sprintf("➜ %s$ git stash drop\n", repoPath)
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
-	return err
+	return echo + string(out), err
 }
 
-func Checkout(repo repositories.Repository, recurse bool) error {
+func Checkout(repo repositories.Repository, recurse bool) (string, error) {
 	repoPath, err := repositories.ResolvePath(repo.Path)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	cmd := exec.Command("git")
@@ -268,8 +263,7 @@ func Checkout(repo repositories.Repository, recurse bool) error {
 		cmd.Args = append(cmd.Args, "--recurse-submodules")
 	}
 
-	fmt.Printf("➜ %s$ git checkout %s\n", repoPath, strings.Join(cmd.Args[4:], " "))
+	echo := fmt.Sprintf("➜ %s$ git checkout %s\n", repoPath, strings.Join(cmd.Args[4:], " "))
 	out, err := cmd.CombinedOutput()
-	fmt.Printf("%s", out)
-	return err
+	return echo + string(out), err
 }

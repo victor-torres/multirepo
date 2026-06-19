@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -280,6 +281,59 @@ func TestHelpFlag(t *testing.T) {
 		}
 		if !strings.Contains(output, "usage: multirepo <command>") {
 			t.Errorf("%q output should contain usage text, got:\n%s", arg, output)
+		}
+	}
+}
+
+func TestStatusJSONEndToEnd(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	clone := testutil.CloneRepo(t, origin)
+	workDir := t.TempDir()
+	writeConfig(t, workDir, fmt.Sprintf(`
+repositories:
+  myrepo:
+    path: %s
+    url: %s
+    branch: main
+`, clone, origin))
+
+	output, exitCode := runBinary(t, workDir, "status", "--json")
+	if exitCode != 0 {
+		t.Fatalf("status --json exit code = %d, want 0\n%s", exitCode, output)
+	}
+
+	var rows []map[string]any
+	if err := json.Unmarshal([]byte(output), &rows); err != nil {
+		t.Fatalf("status --json output is not valid JSON: %v\noutput:\n%s", err, output)
+	}
+	if len(rows) != 1 || rows[0]["name"] != "myrepo" {
+		t.Errorf("unexpected JSON rows: %v", rows)
+	}
+}
+
+func TestSyncJobsFlagEndToEnd(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	workDir := t.TempDir()
+	base := t.TempDir()
+	writeConfig(t, workDir, fmt.Sprintf(`
+repositories:
+  alpha:
+    path: %[1]s/alpha
+    url: %[2]s
+    tag: v1.0.0
+  beta:
+    path: %[1]s/beta
+    url: %[2]s
+    tag: v1.0.0
+`, base, origin))
+
+	output, exitCode := runBinary(t, workDir, "sync", "--jobs", "2")
+	if exitCode != 0 {
+		t.Fatalf("sync --jobs 2 exit code = %d, want 0\n%s", exitCode, output)
+	}
+	for _, name := range []string{"alpha", "beta"} {
+		if _, err := os.Stat(filepath.Join(base, name, "file.txt")); err != nil {
+			t.Errorf("repository %s was not synced: %v", name, err)
 		}
 	}
 }
