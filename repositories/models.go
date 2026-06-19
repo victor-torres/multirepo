@@ -20,3 +20,13 @@ type Target struct {
 	Name        string
 	DisplayName string
 }
+
+// LockConfig mirrors repositories.lock: every repository pinned to the
+// exact commit it was on when `multirepo lock` ran.
+type LockConfig struct {
+	Repos map[string]LockedRepository `yaml:"repositories"`
+}
+
+type LockedRepository struct {
+	Commit string `yaml:"commit"`
+}

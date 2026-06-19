@@ -602,3 +602,59 @@ func TestRunFailingCommandReturnsError(t *testing.T) {
 		t.Errorf("Run terminated the process when the executed command failed instead of returning an error: %v\n%s", err, out)
 	}
 }
+
+// --- Lock ---
+
+func TestLockWritesResolvedCommits(t *testing.T) {
+	origin := testutil.CreateOriginRepo(t)
+	cloneA := testutil.CloneRepo(t, origin)
+	cloneB := testutil.CloneRepo(t, origin)
+	testutil.RunGit(t, cloneB, "checkout", "v1.0.0")
+	config := repositories.Config{Repos: map[string]repositories.Repository{
+		"alpha": {Path: cloneA, URL: origin, Branch: "main"},
+		"beta":  {Path: cloneB, URL: origin, Tag: "v1.0.0"},
+	}}
+	workDir := t.TempDir()
+	testutil.Chdir(t, workDir)
+
+	var err error
+	testutil.CaptureStdout(t, func() {
+		err = commands.Lock(config)
+	})
+	if err != nil {
+		t.Fatalf("Lock returned error: %v", err)
+	}
+
+	lock, err := repositories.ParseLock()
+	if err != nil {
+		t.Fatalf("ParseLock returned error: %v", err)
+	}
+	wantA := testutil.RunGit(t, cloneA, "rev-parse", "HEAD")
+	wantB := testutil.RunGit(t, cloneB, "rev-parse", "HEAD")
+	if got := lock.Repos["alpha"].Commit; got != wantA {
+		t.Errorf("locked commit for alpha = %q, want %q", got, wantA)
+	}
+	if got := lock.Repos["beta"].Commit; got != wantB {
+		t.Errorf("locked commit for beta = %q, want %q", got, wantB)
+	}
+}
+
+func TestLockFailsWhenRepositoryMissing(t *testing.T) {
+	config := singleRepoConfig("ghost", repositories.Repository{
+		Path: filepath.Join(t.TempDir(), "missing"),
+		URL:  "https://example.com/ghost.git",
+		Tag:  "v1.0.0",
+	})
+	testutil.Chdir(t, t.TempDir())
+
+	var err error
+	testutil.CaptureStdout(t, func() {
+		err = commands.Lock(config)
+	})
+	if err == nil {
+		t.Fatal("expected an error when locking a missing repository, got nil")
+	}
+	if _, statErr := os.Stat("repositories.lock"); !os.IsNotExist(statErr) {
+		t.Error("repositories.lock should not be written when locking fails")
+	}
+}

@@ -221,3 +221,30 @@ func Run(config repositories.Config, repository string, command string, args []s
 	}
 	return nil
 }
+
+// Lock resolves the current commit of every repository and writes
+// repositories.lock, so a later `sync --locked` reproduces this exact
+// state. Every repository must exist locally.
+func Lock(config repositories.Config) error {
+	PrintRepositoryCounter(config)
+
+	lock := repositories.LockConfig{
+		Repos: map[string]repositories.LockedRepository{},
+	}
+	for _, repoName := range GetOrderedRepoNames(config) {
+		repo := config.Repos[repoName]
+		commitHash, err := git.GetCurrentCommit(repo)
+		if err != nil {
+			return fmt.Errorf("cannot lock repository '%s': %w (sync it first)", repoName, err)
+		}
+		lock.Repos[repoName] = repositories.LockedRepository{Commit: commitHash}
+		fmt.Printf("%s ➜ %s\n", repoName, commitHash)
+	}
+
+	err := repositories.WriteLock(lock)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("\nWrote %s\n", repositories.LockFileName)
+	return nil
+}

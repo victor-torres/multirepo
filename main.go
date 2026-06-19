@@ -20,7 +20,8 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("These are common commands used in various situations:")
 	fmt.Println()
-	fmt.Println("multirepo sync\t\t\t\t\t\t\tClone repositories and checkout the specified reference.")
+	fmt.Println("multirepo sync [--locked]\t\t\t\t\tClone repositories and checkout the specified reference.")
+	fmt.Println("multirepo lock\t\t\t\t\t\t\tPin every repository to its current commit in repositories.lock.")
 	fmt.Println("multirepo status\t\t\t\t\t\tDisplay status for each one of the repositories.")
 	fmt.Println("multirepo run <repository name | --all> <command> [<args>]\tRun an arbitrary command inside one or all repositories.")
 	fmt.Println("multirepo version\t\t\t\t\t\tPrint the multirepo version.")
@@ -55,8 +56,26 @@ func main() {
 	} else if len(os.Args) >= 2 && os.Args[1] == "sync" {
 		force := slices.Contains(os.Args, "--force") || slices.Contains(os.Args, "-f")
 		recurse := slices.Contains(os.Args, "--recurse") || slices.Contains(os.Args, "-r")
+		locked := slices.Contains(os.Args, "--locked")
 
-		err := commands.Sync(loadConfig(), force, recurse)
+		config := loadConfig()
+		if locked {
+			lock, err := repositories.ParseLock()
+			if err != nil {
+				log.Fatal(err)
+			}
+			config, err = repositories.ApplyLock(config, lock)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		err := commands.Sync(config, force, recurse)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if len(os.Args) == 2 && os.Args[1] == "lock" {
+		err := commands.Lock(loadConfig())
 		if err != nil {
 			log.Fatal(err)
 		}

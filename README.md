@@ -170,6 +170,35 @@ remote counterpart. But you'll need to perform additional operations if:
 - you have uncommited changes
   - you need to stash or revert your changes (or sync with `--force`)
 
+## Lock
+
+Branch (and tag) targets are moving references. To make a checkout
+reproducible — for teammates or CI — pin every repository to its exact
+current commit:
+
+```shell
+multirepo lock
+```
+
+This writes a `repositories.lock` file next to `repositories.yaml`:
+
+```yaml
+repositories:
+  fastapi:
+    commit: 1c3e6918750ccb3f20ea260e9a4238ce2c0e5f63
+  pytest:
+    commit: 93dd34e76d9c687d1c249fe8cf94bdf46813f783
+```
+
+Commit the lock file to your main repository. Anyone can then reproduce
+that exact state, regardless of where branches have moved since:
+
+```shell
+multirepo sync --locked
+```
+
+Run `multirepo lock` again whenever you want to roll the pins forward.
+
 ## Run
 
 Guess what: there's a convenient method to run a command on all of them at once with:
